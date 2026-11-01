@@ -416,7 +416,7 @@ function Formats() {
             {n} / {formats[f]}
           </span>
           <div className="racket-mini">
-            {f === "GROUP" ? "↗" : f === "PERSONAL" ? "◎" : "✳"}
+            {f === "GROUP" ? "↗" : f === "PERSONAL" ? "◎" : "✱"}
           </div>
           <h3>{title}</h3>
           <p>{text}</p>
@@ -547,7 +547,7 @@ function Home({
             ◎ <b>Внимание тренера</b>
           </span>
           <span>
-            ✳ <b>Группы и индивидуально</b>
+            ✱ <b>Группы и индивидуально</b>
           </span>
           <span>
             ⌁ <b>Запись за пару минут</b>
