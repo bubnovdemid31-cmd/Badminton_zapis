@@ -14,13 +14,13 @@ const env = {
 };
 try {
   for (const args of [
-    ["scripts/migrate.ts"],
+    ["backend/scripts/migrate.ts"],
     [
       "--test",
       "--test-concurrency=1",
-      ...readdirSync("tests")
+      ...readdirSync("backend/tests")
         .filter((f) => f.endsWith(".test.ts"))
-        .map((f) => "tests/" + f),
+        .map((f) => "backend/tests/" + f),
     ],
   ]) {
     const r = spawnSync(

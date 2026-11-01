@@ -1,6 +1,6 @@
 import { defineConfig } from "prisma/config";
 import { PrismaLibSQL } from "@prisma/adapter-libsql";
-import { databaseUrl } from "./server/database-path.js";
+import { databaseUrl } from "./src/database-path.js";
 export default defineConfig({
   schema: "prisma/schema.prisma",
   experimental: { adapter: true },

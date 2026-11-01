@@ -658,7 +658,7 @@ app.use("/api", (_req, _res, next) =>
 if (process.env.SERVE_WEB === "1") {
   const web = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
-    "../web",
+    "../../web",
   );
   app.use(express.static(web));
   app.get("/{*path}", (_req, res) =>

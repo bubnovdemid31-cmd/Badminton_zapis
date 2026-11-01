@@ -1,7 +1,7 @@
 import { createInterface } from "node:readline/promises";
 import { hash } from "bcryptjs";
 import { z } from "zod";
-import { db, atomic, audit, searchText } from "../server/db.js";
+import { db, atomic, audit, searchText } from "../src/db.js";
 async function password() {
   if (process.env.ADMIN_PASSWORD) return process.env.ADMIN_PASSWORD;
   if (!process.stdin.isTTY)

@@ -2,16 +2,16 @@ import "dotenv/config";
 import { test, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { hash } from "bcryptjs";
-import { db, type Actor } from "../server/db.js";
+import { db, type Actor } from "../src/db.js";
 import {
   book,
   cancelBooking,
   transferBooking,
   getBooking,
   attendance,
-} from "../server/booking.js";
-import { saveSession, cancelSession, series } from "../server/schedule.js";
-import { app } from "../server/app.js";
+} from "../src/booking.js";
+import { saveSession, cancelSession, series } from "../src/schedule.js";
+import { app } from "../src/app.js";
 import type { Server } from "node:http";
 if (
   !process.env.TEST_DATABASE_URL ||
@@ -529,7 +529,7 @@ test("SQLite writer lock protects the last seat across independent Node processe
   const { fork } = await import("node:child_process");
   await fixtureSession("s1");
   const clients = ["a", "b"].map((id) =>
-    fork("tests/booking-worker.ts", [], {
+    fork("backend/tests/booking-worker.ts", [], {
       execArgv: ["--import", "tsx"],
       env: { ...process.env, BOOKING_ACTOR: id },
       stdio: ["ignore", "ignore", "pipe", "ipc"],

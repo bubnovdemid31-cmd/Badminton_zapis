@@ -1,4 +1,4 @@
-import { db, atomic, settings } from "../server/db.js";
+import { db, atomic, settings } from "../src/db.js";
 import { fromZonedTime } from "date-fns-tz";
 async function seed() {
   await atomic(async (tx) => {

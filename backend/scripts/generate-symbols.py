@@ -19,4 +19,4 @@ fb.setupNameTable({'familyName': 'Club Symbols', 'styleName': 'Regular', 'unique
 fb.setupOS2(sTypoAscender=900, sTypoDescender=-100, usWinAscent=900, usWinDescent=100)
 fb.setupPost()
 fb.setupMaxp()
-fb.save('public/club-symbols.ttf')
+fb.save('frontend/public/club-symbols.ttf')

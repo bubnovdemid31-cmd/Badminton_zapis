@@ -12,3 +12,8 @@ data
 *.db-*
 *.sqlite
 *.sqlite-*
+
+deploy/reg-ru/site
+
+**/test-results
+**/playwright-report

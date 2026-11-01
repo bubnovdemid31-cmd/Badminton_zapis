@@ -2,14 +2,14 @@ import { createClient } from "@libsql/client";
 import { readdir, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
-import { databaseUrl } from "../server/database-path.js";
+import { databaseUrl } from "../src/database-path.js";
 export async function migrate() {
   const client = createClient({ url: databaseUrl, concurrency: 1 });
   try {
     await client.execute("PRAGMA journal_mode=WAL");
     await client.execute("PRAGMA foreign_keys=ON");
     await client.execute("PRAGMA busy_timeout=5000");
-    const root = path.resolve("prisma/migrations");
+    const root = path.resolve("backend/prisma/migrations");
     for (const dir of (await readdir(root, { withFileTypes: true }))
       .filter((d) => d.isDirectory())
       .sort((a, b) => a.name.localeCompare(b.name))) {

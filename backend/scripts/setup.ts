@@ -44,9 +44,14 @@ if (
 writeFileSync(".env", text, { mode: 0o600 });
 const env = { ...process.env, ...parse(text) };
 for (const command of [
-  ["node_modules/prisma/build/index.js", "generate"],
-  ["node_modules/tsx/dist/cli.mjs", "scripts/migrate.ts"],
-  ["node_modules/tsx/dist/cli.mjs", "prisma/seed.ts"],
+  [
+    "node_modules/prisma/build/index.js",
+    "generate",
+    "--config",
+    "backend/prisma.config.ts",
+  ],
+  ["node_modules/tsx/dist/cli.mjs", "backend/scripts/migrate.ts"],
+  ["node_modules/tsx/dist/cli.mjs", "backend/prisma/seed.ts"],
 ]) {
   const result = spawnSync(process.execPath, command, {
     env,

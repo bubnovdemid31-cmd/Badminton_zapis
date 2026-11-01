@@ -1,5 +1,5 @@
-import { db, AppError } from "../server/db.js";
-import { book } from "../server/booking.js";
+import { db, AppError } from "../src/db.js";
+import { book } from "../src/booking.js";
 process.once("message", async () => {
   try {
     await book(

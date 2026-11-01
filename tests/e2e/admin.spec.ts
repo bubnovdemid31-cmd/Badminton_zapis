@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { db } from "../server/db.js";
+import { db } from "../../backend/src/db.js";
 let email: string, password: string;
 let trainerId: string, courtId: string, trainerName: string;
 test.beforeAll(async () => {
@@ -9,7 +9,7 @@ test.beforeAll(async () => {
   password = randomBytes(24).toString("hex");
   const result = spawnSync(
     process.execPath,
-    ["node_modules/tsx/dist/cli.mjs", "scripts/create-admin.ts"],
+    ["node_modules/tsx/dist/cli.mjs", "backend/scripts/create-admin.ts"],
     {
       env: {
         ...process.env,
