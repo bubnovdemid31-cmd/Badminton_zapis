@@ -31,7 +31,7 @@ test.beforeAll(async () => {
     await db.court.create({
       data: {
         name: "Тестовый корт " + Date.now(),
-        venueId: "demo-venue-center",
+        venueId: "club-youth",
       },
     })
   ).id;

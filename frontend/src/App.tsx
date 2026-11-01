@@ -576,7 +576,7 @@ function Home({
               ))}
             </div>
           ) : (
-            <Empty>Скоро здесь появятся новые занятия.</Empty>
+            <WeeklySchedule data={data} />
           )}
         </div>
       </section>

@@ -20,8 +20,7 @@
     "format": "prettier --ignore-path .gitignore --write frontend backend/src backend/scripts/*.ts backend/tests backend/prisma/seed.ts backend/*.ts backend/*.json tests deploy/**/*.mjs deploy/**/*.md docs README.md package.json .github/workflows/ci.yml",
     "setup": "tsx backend/scripts/setup.ts",
     "predev": "npm run db:generate && npm run db:migrate",
-    "package:reg-ru": "node deploy/reg-ru/package.mjs",
-    "db:seed:demo": "tsx backend/prisma/seed-demo.ts"
+    "package:reg-ru": "node deploy/reg-ru/package.mjs"
   },
   "dependencies": {
     "@fontsource-variable/golos-text": "^5.3.0",

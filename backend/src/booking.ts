@@ -37,9 +37,13 @@ async function eligible(
 ) {
   const session = await tx.session.findUnique({
     where: { id: input.sessionId },
+    include: { trainer: true, court: { include: { venue: true } } },
   });
   if (
     !session ||
+    session.trainer.archived ||
+    session.court.archived ||
+    session.court.venue.archived ||
     session.cancelled ||
     !session.open ||
     +session.startsAt <= Date.now()

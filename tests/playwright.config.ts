@@ -1,5 +1,9 @@
 import "dotenv/config";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+process.env.DATABASE_URL = pathToFileURL(
+  fileURLToPath(new URL("../data/browser-test.db", import.meta.url)),
+).href;
+process.env.NODE_ENV = "test";
 import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
@@ -24,7 +28,7 @@ export default defineConfig({
   ],
   webServer: {
     cwd: fileURLToPath(new URL("../", import.meta.url)),
-    command: "node dist/backend/src/index.js",
+    command: "node --import tsx tests/start-e2e.ts",
     url: "http://127.0.0.1:4173/api/health",
     reuseExistingServer: false,
     env: {

@@ -673,3 +673,58 @@ test("mini-group and split sessions accept club pricing and retain starting-pric
   assert.equal(own.session.priceFrom, true);
   assert.equal(own.session.price, 150000);
 });
+
+test("upgrading an existing database removes the old catalogue from all active lists without cancelling bookings", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { createClient } = await import("@libsql/client");
+  const { databaseUrl } = await import("../src/database-path.js");
+  const { spawnSync } = await import("node:child_process");
+  await fixtureSession("legacy-session");
+  const original = await book(a, { sessionId: "legacy-session" });
+  const client = createClient({ url: databaseUrl });
+  try {
+    await client.executeMultiple(
+      readFileSync(
+        "backend/prisma/migrations/202611010005_retire_legacy_catalog/migration.sql",
+        "utf8",
+      ),
+    );
+  } finally {
+    client.close();
+  }
+  const seeded = spawnSync(
+    process.execPath,
+    ["node_modules/tsx/dist/cli.mjs", "backend/prisma/seed.ts"],
+    { env: process.env, encoding: "utf8" },
+  );
+  assert.equal(seeded.status, 0, seeded.stderr);
+  const browser = new BrowserClient();
+  const catalogue = await browser.request("/public");
+  assert.deepEqual(
+    catalogue.data.trainers.map((t: { name: string }) => t.name).sort(),
+    ["Георгий Б.", "Дарья Т.", "Полина Д.", "Полина Т."].sort(),
+  );
+  assert.deepEqual(
+    catalogue.data.venues.map((v: { name: string }) => v.name).sort(),
+    ["СК «Молодежный»", "СК «Динамо спорта»"].sort(),
+  );
+  assert.equal((await browser.request("/sessions")).data.length, 0);
+  await assert.rejects(book(b, { sessionId: "legacy-session" }), /недоступна/);
+  assert.equal(
+    (await db.booking.findUniqueOrThrow({ where: { id: original.id } })).status,
+    "BOOKED",
+  );
+  assert.equal(
+    (await db.session.findUniqueOrThrow({ where: { id: "legacy-session" } }))
+      .cancelled,
+    false,
+  );
+  await browser.login("admin@test.ru");
+  const resources = await browser.request("/admin/resources");
+  assert.equal(resources.data.trainers.length, 4);
+  assert.equal(resources.data.venues.length, 2);
+  assert.equal((await browser.request("/admin/sessions")).data.length, 0);
+  const overview = await browser.request("/admin/overview");
+  assert.equal(overview.data.nextSessions.length, 0);
+  assert.equal(overview.data.active, 0);
+});

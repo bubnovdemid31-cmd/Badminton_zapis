@@ -319,10 +319,15 @@ app.get("/api/sessions", async (req, res) => {
     where: {
       startsAt: { gt: new Date() },
       cancelled: false,
+      trainer: { archived: false },
+      court: {
+        archived: false,
+        venue: { archived: false },
+        ...(filters.venue ? { venueId: filters.venue } : {}),
+      },
       ...(filters.format ? { format: filters.format } : {}),
       ...(filters.level ? { level: filters.level } : {}),
       ...(filters.trainer ? { trainerId: filters.trainer } : {}),
-      ...(filters.venue ? { court: { venueId: filters.venue } } : {}),
     },
     include: sessionInclude,
     orderBy: { startsAt: "asc" },
@@ -428,16 +433,31 @@ app.get("/api/admin/overview", async (_req, res) => {
   );
   const [today, active, nextSessions] = await Promise.all([
     db.session.count({
-      where: { cancelled: false, startsAt: { gte: start, lt: end } },
+      where: {
+        cancelled: false,
+        startsAt: { gte: start, lt: end },
+        trainer: { archived: false },
+        court: { archived: false, venue: { archived: false } },
+      },
     }),
     db.booking.count({
       where: {
         status: "BOOKED",
-        session: { cancelled: false, endsAt: { gte: new Date() } },
+        session: {
+          cancelled: false,
+          endsAt: { gte: new Date() },
+          trainer: { archived: false },
+          court: { archived: false, venue: { archived: false } },
+        },
       },
     }),
     db.session.findMany({
-      where: { cancelled: false, startsAt: { gt: new Date() } },
+      where: {
+        cancelled: false,
+        startsAt: { gt: new Date() },
+        trainer: { archived: false },
+        court: { archived: false, venue: { archived: false } },
+      },
       include: sessionInclude,
       orderBy: { startsAt: "asc" },
       take: 8,
@@ -448,6 +468,10 @@ app.get("/api/admin/overview", async (_req, res) => {
 app.get("/api/admin/sessions", async (_req, res) =>
   res.json(
     await db.session.findMany({
+      where: {
+        trainer: { archived: false },
+        court: { archived: false, venue: { archived: false } },
+      },
       include: sessionInclude,
       orderBy: { startsAt: "desc" },
       take: 500,
@@ -553,9 +577,12 @@ app.get("/api/admin/clients", async (req, res) => {
 });
 app.get("/api/admin/resources", async (_req, res) => {
   const [trainers, venues, courts] = await Promise.all([
-    db.trainer.findMany(),
-    db.venue.findMany(),
-    db.court.findMany({ include: { venue: true } }),
+    db.trainer.findMany({ where: { archived: false } }),
+    db.venue.findMany({ where: { archived: false } }),
+    db.court.findMany({
+      where: { archived: false, venue: { archived: false } },
+      include: { venue: true },
+    }),
   ]);
   res.json({ trainers, venues, courts });
 });
