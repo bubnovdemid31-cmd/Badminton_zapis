@@ -2219,3 +2219,58 @@ footer {
     gap: 20px;
   }
 }
+
+/* Original logo.jpg: retain the full 1280 × 853 composition without cropping. */
+.brand-logo-slot {
+  display: block;
+  width: 168px;
+  aspect-ratio: 1280 / 853;
+  flex-shrink: 0;
+}
+.brand-logo-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+.header-inner {
+  height: 132px;
+}
+.header-inner .brand {
+  flex-shrink: 0;
+}
+.boot .brand {
+  justify-content: center;
+}
+.boot .brand-logo-slot {
+  width: 240px;
+}
+@media (max-width: 800px) {
+  .header-inner {
+    height: 112px;
+  }
+  .header-inner .brand-logo-slot {
+    width: 144px;
+  }
+  .header-inner nav.opened {
+    top: 112px;
+  }
+}
+@media (max-width: 560px) {
+  .header-inner {
+    height: 104px;
+  }
+  .header-inner .brand-logo-slot {
+    width: 126px;
+  }
+  .header-inner nav.opened {
+    top: 104px;
+  }
+  .footer-inner .brand-logo-slot {
+    width: 168px;
+  }
+  .boot .brand-logo-slot {
+    width: 180px;
+  }
+}

@@ -27,6 +27,25 @@ function route() {
   const [path, query] = (window.location.hash.slice(1) || "/").split("?");
   return { path, query: new URLSearchParams(query) };
 }
+function BrandLogo() {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <span className="brand-logo-slot" role="img" aria-label="Vlad Smash Club">
+      <img
+        className="brand-logo-image"
+        src="/logo.jpg"
+        alt=""
+        width={1280}
+        height={853}
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(false)}
+        style={{ visibility: loaded ? "visible" : "hidden" }}
+        decoding="async"
+      />
+    </span>
+  );
+}
+
 export function App() {
   const [location, setLocation] = useState(route),
     [data, setData] = useState<PublicData | null>(null),
@@ -82,9 +101,7 @@ export function App() {
     return (
       <div className="boot">
         <div className="brand">
-          <span className="brand-wordmark">
-            VLAD SMASH<small>BADMINTON CLUB</small>
-          </span>
+          <BrandLogo />
         </div>
         <Loading />
       </div>
@@ -105,9 +122,7 @@ export function App() {
       <header>
         <div className="container header-inner">
           <a className="brand" href="#/">
-            <span className="brand-wordmark">
-              VLAD SMASH<small>BADMINTON CLUB</small>
-            </span>
+            <BrandLogo />
           </a>
           <button
             className="mobile-toggle icon-btn"
@@ -296,9 +311,7 @@ export function App() {
       <footer>
         <div className="container footer-inner">
           <a className="brand" href="#/">
-            <span className="brand-wordmark">
-              VLAD SMASH<small>BADMINTON CLUB</small>
-            </span>
+            <BrandLogo />
           </a>
           <p>Больше движения. Больше игры.</p>
           <div>
