@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "client"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum Role {
+  CLIENT
+  ADMIN
+}
+enum Format {
+  GROUP
+  PERSONAL
+  KIDS
+}
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+enum BookingStatus {
+  BOOKED
+  CANCELLED_CLIENT
+  CANCELLED_CLUB
+  ATTENDED
+  MISSED
+}
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  phone String @default("")
+  passwordHash String
+  role Role @default(CLIENT)
+  createdAt DateTime @default(now())
+  authVersion Int @default(0)
+  bookings Booking[]
+}
+model Trainer {
+  id String @id @default(cuid())
+  name String
+  bio String
+  archived Boolean @default(false)
+  sessions Session[]
+}
+model Venue {
+  id String @id @default(cuid())
+  name String
+  address String
+  archived Boolean @default(false)
+  courts Court[]
+}
+model Court {
+  id String @id @default(cuid())
+  name String
+  venueId String
+  venue Venue @relation(fields:[venueId], references:[id])
+  archived Boolean @default(false)
+  sessions Session[]
+}
+model Series {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  sessions Session[]
+}
+model Session {
+  id String @id @default(cuid())
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  trainerId String
+  trainer Trainer @relation(fields:[trainerId], references:[id])
+  courtId String
+  court Court @relation(fields:[courtId], references:[id])
+  seriesId String?
+  series Series? @relation(fields:[seriesId], references:[id])
+  format Format
+  level Level
+  price Int
+  capacity Int
+  open Boolean @default(true)
+  cancelled Boolean @default(false)
+  bookings Booking[]
+  @@index([startsAt, endsAt])
+}
+model Booking {
+  id String @id @default(cuid())
+  sessionId String
+  session Session @relation(fields:[sessionId], references:[id])
+  userId String?
+  user User? @relation(fields:[userId], references:[id])
+  guestName String?
+  guestPhone String?
+  participantKey String
+  childName String?
+  childAge Int?
+  status BookingStatus @default(BOOKED)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, status])
+  @@index([sessionId, status])
+}
+model Audit {
+  id String @id @default(cuid())
+  actorId String
+  action String
+  entityId String
+  details Json
+  createdAt DateTime @default(now())
+}
+model Settings {
+  id String @id @default("club")
+  name String @default("Клуб бадминтона")
+  timezone String @default("Asia/Vladivostok")
+  phone String @default("Контактный телефон пока не указан")
+  email String @default("")
+  address String @default("Адрес уточняется")
+  cancelHours Int @default(12)
+}
+model RateLimit {
+  key String @id
+  count Int
+  expiresAt DateTime
+}
