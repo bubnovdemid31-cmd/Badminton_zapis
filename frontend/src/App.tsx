@@ -82,7 +82,11 @@ export function App() {
     return (
       <div className="boot">
         <div className="brand">
-          <span className="brand-mark">↗</span>Клуб бадминтона
+          <img
+            className="brand-logo"
+            src="/vlad-smash.svg"
+            alt="Клуб бадминтона"
+          />
         </div>
         <Loading />
       </div>
@@ -103,11 +107,7 @@ export function App() {
       <header>
         <div className="container header-inner">
           <a className="brand" href="#/">
-            <span className="brand-mark">↗</span>
-            <span>
-              {club.name}
-              <small>ИГРА ОБЪЕДИНЯЕТ</small>
-            </span>
+            <img className="brand-logo" src="/vlad-smash.svg" alt={club.name} />
           </a>
           <button
             className="mobile-toggle icon-btn"
@@ -296,8 +296,7 @@ export function App() {
       <footer>
         <div className="container footer-inner">
           <a className="brand" href="#/">
-            <span className="brand-mark">↗</span>
-            {club.name}
+            <img className="brand-logo" src="/vlad-smash.svg" alt={club.name} />
           </a>
           <p>Больше движения. Больше игры.</p>
           <div>
@@ -521,7 +520,7 @@ function Home({
         <div className="hero-visual">
           <img
             src="/court.svg"
-            alt="Авторская иллюстрация зелёного бадминтонного корта с ракетками и воланом"
+            alt="Авторская иллюстрация бадминтонного корта с ракетками и воланом"
           />
           <div className="visual-top">
             БАДМИНТОН / КРУГЛЫЙ ГОД <span>↗</span>

@@ -8,14 +8,14 @@
 }
 :root {
   font-family: "Club Symbols", "Golos Text Variable", Arial, sans-serif;
-  color: #192720;
-  background: #fcfcf8;
+  color: #101218;
+  background: #f8f7f4;
   font-synthesis: none;
   font-weight: 400;
-  --green: #245d40;
-  --lime: #d3ed90;
-  --muted: #6e786f;
-  --border: #e0e5dc;
+  --green: #df101d;
+  --lime: #ffffff;
+  --muted: #707178;
+  --border: #e1e1e4;
 }
 * {
   box-sizing: border-box;
@@ -58,7 +58,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #9fbd52;
+  outline: 3px solid #ee1524;
   outline-offset: 4px;
 }
 h1,
@@ -99,7 +99,7 @@ small,
   margin: auto;
 }
 header {
-  background: #fcfcf8;
+  background: #f8f7f4;
   border-bottom: 1px solid var(--border);
 }
 .header-inner {
@@ -124,7 +124,7 @@ header {
   letter-spacing: 2.6px;
   margin-top: 8px;
   font-weight: 500;
-  color: #697666;
+  color: #74747c;
 }
 .brand-mark {
   width: 40px;
@@ -151,7 +151,7 @@ header {
 }
 .account-link {
   font-size: 13px;
-  border: 1px solid #b9c4b5;
+  border: 1px solid #d8d8dc;
   border-radius: 5px;
   padding: 12px 18px;
   white-space: nowrap;
@@ -199,7 +199,7 @@ header {
 }
 .hero-copy > p {
   font-size: 16px;
-  color: #697268;
+  color: #686970;
   line-height: 1.8;
   margin-bottom: 28px;
 }
@@ -225,20 +225,20 @@ header {
   transition: background 0.15s;
 }
 .button:hover {
-  background: #16492f;
+  background: #b70915;
   color: #fff;
 }
 .button.outline {
   background: transparent;
   color: var(--green);
-  border-color: #a7baa9;
+  border-color: #dbb8bd;
 }
 .button.outline:hover {
-  background: #eef3e7;
+  background: #fff0f1;
 }
 .button.light {
   background: var(--lime);
-  color: #244231;
+  color: #15171c;
   border-color: var(--lime);
 }
 .button.full {
@@ -246,7 +246,7 @@ header {
 }
 .text-link {
   font-size: 12px;
-  border-bottom: 1px solid #a0ae96;
+  border-bottom: 1px solid #d3b5b9;
   padding-bottom: 5px;
 }
 .hero-note {
@@ -260,13 +260,13 @@ header {
 }
 .hero-note b {
   font-weight: 450;
-  color: #39483b;
+  color: #363840;
 }
 .tiny-circles {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #e9eee1;
+  background: #fbe7e9;
   display: grid;
   place-items: center;
   font-size: 27px;
@@ -277,7 +277,7 @@ header {
   height: 605px;
   overflow: hidden;
   border-radius: 7px;
-  color: #faf9e9;
+  color: #ffffff;
 }
 .hero-visual > img {
   width: 100%;
@@ -303,7 +303,7 @@ header {
   left: 25px;
   background: rgba(249, 250, 233, 0.94);
   padding: 14px 18px;
-  color: #35533b;
+  color: #17191f;
   border-radius: 4px;
   font-size: 9px;
   letter-spacing: 1.2px;
@@ -313,7 +313,7 @@ header {
   display: inline-block;
   width: 6px;
   height: 6px;
-  background: #4b7634;
+  background: #e51322;
   border-radius: 50%;
   margin-right: 8px;
 }
@@ -332,7 +332,7 @@ header {
   font-weight: 500;
 }
 .circle-arrow {
-  border: 1px solid #b5c4a3;
+  border: 1px solid #e2e2e5;
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -343,7 +343,7 @@ header {
 .benefit-strip {
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  background: #f4f5ee;
+  background: #efefef;
 }
 .benefit-strip > .container {
   display: flex;
@@ -354,7 +354,7 @@ header {
 }
 .benefit-strip span {
   font-size: 23px;
-  color: #597446;
+  color: #e11120;
   display: flex;
   align-items: center;
   gap: 13px;
@@ -362,7 +362,7 @@ header {
 .benefit-strip b {
   font-size: 11px;
   font-weight: 450;
-  color: #43503f;
+  color: #393a42;
 }
 .section {
   padding-top: 70px;
@@ -387,8 +387,8 @@ header {
   gap: 20px;
 }
 .format-card {
-  background: #f0f2e8;
-  border: 1px solid #e4e8da;
+  background: #ededee;
+  border: 1px solid #e0e0e3;
   border-radius: 6px;
   padding: 27px;
   overflow: hidden;
@@ -400,20 +400,20 @@ header {
   transform: translateY(-4px);
 }
 .format-personal {
-  background: #e7eddf;
+  background: #e7e7e9;
 }
 .format-kids {
-  background: #f3efe4;
+  background: #f8e8e9;
 }
 .format-num {
   font-size: 10px;
   letter-spacing: 1px;
-  color: #64705b;
+  color: #696971;
 }
 .racket-mini {
   height: 95px;
   font-size: 76px;
-  color: #648058;
+  color: #df101d;
   font-weight: 400;
   line-height: 1.15;
 }
@@ -424,7 +424,7 @@ header {
 .format-card p {
   font-size: 12px;
   max-width: 270px;
-  color: #68715f;
+  color: #6a6a73;
   min-height: 44px;
 }
 .format-link {
@@ -432,7 +432,7 @@ header {
   justify-content: space-between;
   align-items: center;
   font-size: 11px;
-  border-top: 1px solid #d3dcc8;
+  border-top: 1px solid #d5d5da;
   padding-top: 18px;
   margin-top: 22px;
 }
@@ -441,7 +441,7 @@ header {
   font-weight: 400;
 }
 .soft-section {
-  background: #f0f3ec;
+  background: #efefef;
 }
 .session-grid {
   display: grid;
@@ -450,10 +450,10 @@ header {
   margin-top: 25px;
 }
 .session-card {
-  border: 1px solid #dce3d5;
+  border: 1px solid #e0e0e4;
   border-radius: 6px;
   padding: 25px;
-  background: #fcfcf8;
+  background: #f8f7f4;
   display: flex;
   flex-direction: column;
 }
@@ -468,18 +468,18 @@ header {
   display: inline-block;
   font-size: 10px;
   border-radius: 3px;
-  background: #e9efdf;
-  color: #42613b;
+  background: #fbe8ea;
+  color: #bb101b;
   padding: 7px 10px;
   white-space: nowrap;
 }
 .tag.personal {
-  background: #f0e8db;
-  color: #796348;
+  background: #ececf0;
+  color: #4c4d56;
 }
 .tag.kids {
-  background: #e6eaf2;
-  color: #516885;
+  background: #faedef;
+  color: #9c2530;
 }
 .session-card h3 {
   font-size: 21px;
@@ -496,7 +496,7 @@ header {
   margin-bottom: 10px;
 }
 .session-details p span {
-  color: #7c8d6e;
+  color: #ac3440;
   margin-right: 8px;
 }
 .session-details p.small {
@@ -514,7 +514,7 @@ header {
   font-weight: 550;
 }
 .few {
-  color: #9b672f;
+  color: #b5101d;
 }
 .muted {
   color: var(--muted);
@@ -527,7 +527,7 @@ header {
 .coach-art {
   position: relative;
   height: 270px;
-  background: #e9e9de;
+  background: #e6e6e8;
   border-radius: 5px;
   overflow: hidden;
   margin-bottom: 22px;
@@ -536,23 +536,23 @@ header {
   align-items: center;
 }
 .coach-1 {
-  background: #dfe7df;
+  background: #e9e9eb;
 }
 .coach-2 {
-  background: #e7e7da;
+  background: #efe8e9;
 }
 .coach-initials {
   font-size: 100px;
   letter-spacing: -9px;
-  color: #a1ad91;
-  border: 1px solid #bcc7ad;
+  color: #a9a9b1;
+  border: 1px solid #cacad0;
   border-radius: 50%;
   padding: 35px;
 }
 .coach-symbol {
   position: absolute;
   font-size: 170px;
-  color: #3e6542;
+  color: #e20d1c;
   opacity: 0.35;
   right: -10px;
   bottom: -10px;
@@ -563,7 +563,7 @@ header {
   left: 22px;
   font-size: 9px;
   letter-spacing: 1.8px;
-  color: #607157;
+  color: #6c6d77;
 }
 .coach h3 {
   margin-bottom: 10px;
@@ -575,20 +575,20 @@ header {
 }
 .coach > a {
   font-size: 11px;
-  border-bottom: 1px solid #b2bca7;
+  border-bottom: 1px solid #d0c2c5;
   padding-bottom: 4px;
 }
 .cta {
   position: relative;
   border-radius: 6px;
-  background: #234b36;
-  color: #f3f4e8;
+  background: #101218;
+  color: #ffffff;
   padding: 50px;
   margin: 0 0 70px;
   overflow: hidden;
 }
 .cta .eyebrow {
-  color: #c0d5aa;
+  color: #ffa7ae;
 }
 .cta h2 {
   font-size: 48px;
@@ -605,13 +605,13 @@ header {
   right: 50px;
   bottom: -60px;
   line-height: 1;
-  color: #c3d797;
+  color: #ed1424;
   opacity: 0.3;
 }
 footer {
   border-top: 1px solid var(--border);
   padding: 35px 0;
-  background: #f4f5ef;
+  background: #efefef;
 }
 .footer-inner {
   display: flex;
@@ -650,7 +650,7 @@ footer {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  background: #f0f3e9;
+  background: #efeff0;
   padding: 22px;
   border-radius: 6px;
 }
@@ -667,10 +667,10 @@ select,
 textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid #d6ddcf;
+  border: 1px solid #d7d7dd;
   border-radius: 4px;
   background: #fff;
-  color: #24352a;
+  color: #20222a;
   font-size: 13px;
   min-height: 43px;
 }
@@ -701,12 +701,12 @@ input[type="checkbox"] {
 }
 .day-tabs button,
 .tabs button {
-  border: 1px solid #dce3d4;
+  border: 1px solid #dcdce1;
   background: transparent;
   padding: 12px 17px;
   font-size: 12px;
   border-radius: 4px;
-  color: #506044;
+  color: #52535c;
 }
 .day-tabs button.chosen,
 .tabs button.chosen {
@@ -715,9 +715,9 @@ input[type="checkbox"] {
   color: white;
 }
 .notice {
-  background: #eaf0dd;
-  color: #395c30;
-  border: 1px solid #d7e1c7;
+  background: #f1f1f4;
+  color: #32333c;
+  border: 1px solid #dcdce2;
   padding: 16px 19px;
   border-radius: 5px;
   font-size: 13px;
@@ -739,7 +739,7 @@ input[type="checkbox"] {
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid #cbd5bf;
+  border: 2px solid #d4d4dc;
   border-top-color: var(--green);
   border-radius: 50%;
   vertical-align: middle;
@@ -753,8 +753,8 @@ input[type="checkbox"] {
 }
 .empty {
   text-align: center;
-  background: #f0f3eb;
-  border: 1px dashed #cdd8c3;
+  background: #efeff2;
+  border: 1px dashed #d0d0d8;
   border-radius: 6px;
   padding: 45px 25px;
   margin: 25px 0;
@@ -878,7 +878,7 @@ input[type="checkbox"] {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: #102a21aa;
+  background: #090b13b8;
   backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
@@ -887,13 +887,13 @@ input[type="checkbox"] {
   overflow: auto;
 }
 .modal {
-  background: #fcfcf8;
+  background: #f8f7f4;
   padding: 30px;
   border-radius: 8px;
   width: min(620px, 100%);
   max-height: 90dvh;
   overflow: auto;
-  box-shadow: 0 25px 70px #0c231a44;
+  box-shadow: 0 25px 70px #090b1344;
 }
 .modal-head {
   display: flex;
@@ -960,8 +960,8 @@ input[type="checkbox"] {
   display: inline-block;
   padding: 7px 10px;
   border-radius: 4px;
-  background: #e8eedc;
-  color: #4d6d3b;
+  background: #f6e9eb;
+  color: #a0202b;
 }
 .status-cancelled_client,
 .status-cancelled_club,
@@ -993,14 +993,14 @@ input[type="checkbox"] {
   margin: 30px 0 45px;
 }
 .stats article {
-  background: #edf2e5;
-  border: 1px solid #d8e1cb;
+  background: #f0f0f3;
+  border: 1px solid #dcdce3;
   border-radius: 6px;
   padding: 25px;
 }
 .stats span {
   font-size: 12px;
-  color: #637255;
+  color: #656570;
   display: block;
 }
 .stats strong {
@@ -1042,8 +1042,8 @@ table {
   text-align: left;
 }
 th {
-  background: #edf2e6;
-  color: #5b6c4f;
+  background: #ededf1;
+  color: #60616c;
   font-weight: 500;
   font-size: 11px;
   padding: 17px;
@@ -1190,7 +1190,7 @@ hr {
     left: 0;
     right: 0;
     z-index: 20;
-    background: #fcfcf8;
+    background: #f8f7f4;
     border-bottom: 1px solid var(--border);
     padding: 20px 25px;
     gap: 20px;
@@ -1677,5 +1677,140 @@ hr {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Vlad Smash: monochrome surfaces, red speed accents and athletic typography. */
+.brand-logo {
+  display: block;
+  width: 220px;
+  max-width: 100%;
+  height: auto;
+}
+header {
+  border-bottom: 2px solid #101218;
+}
+.hero h1 {
+  font-weight: 850;
+  font-style: italic;
+  letter-spacing: -5px;
+}
+.hero h1 em {
+  color: #df101d;
+}
+h2 {
+  font-weight: 700;
+}
+.button {
+  border-radius: 2px;
+  font-weight: 650;
+  box-shadow: 3px 3px 0 #101218;
+}
+.button:hover {
+  transform: translateY(-1px);
+}
+.button.outline {
+  box-shadow: none;
+  border-color: #c6c6cf;
+  color: #181a21;
+}
+.button.light {
+  background: #df101d;
+  border-color: #df101d;
+  color: #fff;
+  box-shadow: 3px 3px 0 #fff;
+}
+.hero-visual {
+  border-radius: 2px;
+  border-bottom: 5px solid #ed1424;
+}
+.hero-visual::after {
+  content: "";
+  position: absolute;
+  right: -25px;
+  top: 90px;
+  width: 150px;
+  height: 7px;
+  background: #ed1424;
+  transform: rotate(-22deg);
+  box-shadow:
+    0 17px 0 #ed1424,
+    0 34px 0 #ed1424;
+  pointer-events: none;
+}
+.format-card,
+.session-card,
+.panel,
+.coach-art,
+.cta,
+.booking-row {
+  border-radius: 2px;
+}
+.format-card {
+  border-top: 3px solid #101218;
+}
+.format-kids {
+  border-top-color: #df101d;
+}
+.format-personal {
+  background: #191b22;
+  border-color: #191b22;
+  color: #fff;
+}
+.format-personal .format-num,
+.format-personal p {
+  color: #c3c4cb;
+}
+.format-personal .format-link {
+  border-color: #40424d;
+}
+.session-card {
+  border-top: 3px solid #df101d;
+}
+.cta {
+  border-left: 6px solid #df101d;
+}
+.cta h2 {
+  font-style: italic;
+  font-weight: 750;
+}
+.coach-art::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 65px;
+  height: 4px;
+  background: #df101d;
+}
+.day-tabs button.chosen,
+.tabs button.chosen {
+  background: #101218;
+  border-color: #101218;
+}
+@media (max-width: 800px) {
+  .brand-logo {
+    width: 180px;
+  }
+}
+@media (max-width: 560px) {
+  .brand-logo {
+    width: 160px;
+  }
+  .header-inner .brand {
+    max-width: 160px;
+  }
+  .hero h1 {
+    font-size: 78px;
+    letter-spacing: -4px;
+  }
+  .hero-visual::after {
+    top: 65px;
+    width: 115px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .button:hover {
+    transform: none;
   }
 }
