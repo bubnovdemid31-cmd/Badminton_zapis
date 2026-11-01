@@ -5,6 +5,7 @@ import {
   atomic,
   audit,
   settings,
+  searchText,
   AppError,
   admin,
   type Actor,
@@ -111,6 +112,7 @@ async function eligible(
     childName,
     childAge,
     participantKey,
+    searchText: searchText(guestName, guestPhone, childName),
   };
 }
 async function ownBooking(tx: Tx, actor: Actor, id: string) {

@@ -4,20 +4,12 @@ on:
   pull_request:
 jobs:
   test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: badminton
-          POSTGRES_PASSWORD: ci-only-password
-          POSTGRES_DB: badminton
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U badminton -d badminton"
-          --health-interval 5s --health-timeout 5s --health-retries 10
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     env:
-      DATABASE_URL: postgresql://badminton:ci-only-password@localhost:5432/badminton
+      DATABASE_URL: file:./data/ci.db
       WEB_ORIGIN: http://localhost:5173
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +17,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: echo "SESSION_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - shell: bash
+        run: node -e "require('fs').appendFileSync(process.env.GITHUB_ENV, 'SESSION_SECRET='+require('crypto').randomBytes(48).toString('hex')+'\n')"
       - run: npm ci --ignore-scripts
       - run: npm run db:generate
       - run: npm run typecheck
@@ -37,5 +30,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: browser-test-results
+          name: browser-test-results-${{ matrix.os }}
           path: test-results/

@@ -1,10 +1,14 @@
-import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { defineConfig } from "prisma/config";
+import { PrismaLibSQL } from "@prisma/adapter-libsql";
+import { databaseUrl } from "./server/database-path.js";
 export default defineConfig({
   schema: "prisma/schema.prisma",
   experimental: { adapter: true },
   engine: "js",
-  adapter: async () => new PrismaPg({ connectionString: env("DATABASE_URL") }),
+  adapter: async () =>
+    new PrismaLibSQL(
+      { url: databaseUrl, concurrency: 1 },
+      { timestampFormat: "unixepoch-ms" },
+    ),
   migrations: { path: "prisma/migrations" },
 });

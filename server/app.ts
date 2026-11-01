@@ -5,11 +5,11 @@ import express, {
   type NextFunction,
 } from "express";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
+import { SQLiteSessionStore } from "./session-store.js";
 import { Passport } from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import type { User as DatabaseUser } from "@prisma/client";
-import pg from "pg";
+
 import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
@@ -24,6 +24,7 @@ import {
   atomic,
   audit,
   settings,
+  searchText,
   AppError,
   admin,
   type Actor,
@@ -62,7 +63,7 @@ const production = process.env.NODE_ENV === "production";
 const secret = process.env.SESSION_SECRET;
 if (!secret || secret.length < 32 || secret.startsWith("GENERATE_"))
   throw new Error(
-    "Задайте случайный SESSION_SECRET длиной не менее 32 символов",
+    "Выполните npm run setup или задайте случайный SESSION_SECRET длиной не менее 32 символов",
   );
 const origin = process.env.WEB_ORIGIN ?? "http://localhost:5173";
 if (production && !origin.startsWith("https://"))
@@ -109,22 +110,10 @@ passport.use(
   ),
 );
 app.use(passport.initialize());
-const PgStore = connectPg(session);
-export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-// Idle connections may be dropped by a database restart. Handle the event without
-// dumping pg client objects (which contain connection metadata) or crashing API.
-pool.on("error", () =>
-  console.error("Session database connection interrupted"),
-);
 app.use(
   session({
     name: "bm.sid",
-    store: new PgStore({
-      pool,
-      tableName: "WebSession",
-      createTableIfMissing: false,
-      errorLog: () => console.error("Session storage operation failed"),
-    }),
+    store: new SQLiteSessionStore(),
     secret,
     resave: false,
     saveUninitialized: false,
@@ -201,7 +190,7 @@ async function emailLimit(email: string) {
     key = "login:" + email;
   const rows = await db.$queryRaw<
     { count: number }[]
-  >`INSERT INTO "RateLimit" (key,count,"expiresAt") VALUES (${key},1,${expiry}) ON CONFLICT (key) DO UPDATE SET count=CASE WHEN "RateLimit"."expiresAt" < ${now} THEN 1 ELSE "RateLimit".count+1 END,"expiresAt"=CASE WHEN "RateLimit"."expiresAt" < ${now} THEN ${expiry} ELSE "RateLimit"."expiresAt" END RETURNING count`;
+  >`INSERT INTO "RateLimit" (key,count,"expiresAt") VALUES (${key},1,${+expiry}) ON CONFLICT (key) DO UPDATE SET count=CASE WHEN "RateLimit"."expiresAt" < ${+now} THEN 1 ELSE "RateLimit".count+1 END,"expiresAt"=CASE WHEN "RateLimit"."expiresAt" < ${+now} THEN ${+expiry} ELSE "RateLimit"."expiresAt" END RETURNING count`;
   if (rows[0].count > 10)
     throw new AppError("Слишком много попыток. Повторите через 15 минут.", 429);
 }
@@ -247,6 +236,7 @@ app.post("/api/auth/register", loginLimit, async (req, res) => {
       name: input.name,
       email: input.email,
       passwordHash: await hash(input.password, 12),
+      searchText: searchText(input.name, input.email),
     },
     select: { ...publicUser, authVersion: true },
   });
@@ -380,7 +370,15 @@ app.patch("/api/account/profile", async (req, res) => {
   res.json(
     await db.user.update({
       where: { id: req.actor!.id },
-      data,
+      data: {
+        ...data,
+        searchText: searchText(
+          data.name,
+          data.phone,
+          (await db.user.findUniqueOrThrow({ where: { id: req.actor!.id } }))
+            .email,
+        ),
+      },
       select: publicUser,
     }),
   );
@@ -495,10 +493,9 @@ app.get("/api/admin/bookings", async (req, res) => {
         ...(f.q
           ? {
               OR: [
-                { guestName: { contains: f.q, mode: "insensitive" } },
-                { guestPhone: { contains: f.q } },
-                { user: { name: { contains: f.q, mode: "insensitive" } } },
-                { user: { email: { contains: f.q, mode: "insensitive" } } },
+                { searchText: { contains: searchText(f.q) } },
+
+                { user: { searchText: { contains: searchText(f.q) } } },
               ],
             }
           : {}),
@@ -540,11 +537,7 @@ app.get("/api/admin/clients", async (req, res) => {
   res.json(
     await db.user.findMany({
       where: {
-        OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { email: { contains: q, mode: "insensitive" } },
-          { phone: { contains: q } },
-        ],
+        OR: [{ searchText: { contains: searchText(q) } }],
       },
       select: {
         ...publicUser,

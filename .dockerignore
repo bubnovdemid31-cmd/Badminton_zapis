@@ -6,3 +6,9 @@ dist
 !.env.example
 test-results
 playwright-report
+
+data
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*

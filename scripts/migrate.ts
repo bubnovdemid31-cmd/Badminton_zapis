@@ -1,18 +1,14 @@
-import "dotenv/config";
-import pg from "pg";
+import { createClient } from "@libsql/client";
 import { readdir, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
-// SQL is generated from Prisma and versioned under prisma/migrations. Applying it
-// through pg avoids an external native-engine download in restricted hosts.
+import { databaseUrl } from "../server/database-path.js";
 export async function migrate() {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
+  const client = createClient({ url: databaseUrl, concurrency: 1 });
   try {
-    await client.query("SELECT pg_advisory_lock(48172932)");
-    await client.query(
-      'CREATE TABLE IF NOT EXISTS "_ClubMigration" (name text PRIMARY KEY, checksum text NOT NULL, "appliedAt" timestamptz NOT NULL DEFAULT now())',
-    );
+    await client.execute("PRAGMA journal_mode=WAL");
+    await client.execute("PRAGMA foreign_keys=ON");
+    await client.execute("PRAGMA busy_timeout=5000");
     const root = path.resolve("prisma/migrations");
     for (const dir of (await readdir(root, { withFileTypes: true }))
       .filter((d) => d.isDirectory())
@@ -22,32 +18,38 @@ export async function migrate() {
           "utf8",
         ),
         checksum = createHash("sha256").update(sql).digest("hex");
-      const old = await client.query(
-        'SELECT checksum FROM "_ClubMigration" WHERE name=$1',
-        [dir.name],
-      );
-      if (old.rows.length) {
-        if (old.rows[0].checksum !== checksum)
-          throw new Error("Применённая миграция изменена: " + dir.name);
-        continue;
-      }
-      await client.query("BEGIN");
+      // BEGIN IMMEDIATE prevents parallel migrators from applying the same file.
+      const tx = await client.transaction("write");
       try {
-        await client.query(sql);
-        await client.query(
-          'INSERT INTO "_ClubMigration" (name,checksum) VALUES ($1,$2)',
-          [dir.name, checksum],
+        await tx.execute(
+          'CREATE TABLE IF NOT EXISTS "_ClubMigration" (name TEXT PRIMARY KEY, checksum TEXT NOT NULL, "appliedAt" INTEGER NOT NULL)',
         );
-        await client.query("COMMIT");
-        console.log("Применена миграция: " + dir.name);
-      } catch (e) {
-        await client.query("ROLLBACK");
-        throw e;
+        const old = await tx.execute({
+          sql: 'SELECT checksum FROM "_ClubMigration" WHERE name=?',
+          args: [dir.name],
+        });
+        if (old.rows.length) {
+          if (old.rows[0].checksum !== checksum)
+            throw new Error("Применённая миграция изменена: " + dir.name);
+        } else {
+          await tx.executeMultiple(sql);
+          await tx.execute({
+            sql: 'INSERT INTO "_ClubMigration" (name,checksum,"appliedAt") VALUES (?,?,?)',
+            args: [dir.name, checksum, Date.now()],
+          });
+          console.log("Применена миграция: " + dir.name);
+        }
+        await tx.commit();
+      } catch (error) {
+        await tx.rollback();
+        throw error;
+      } finally {
+        tx.close();
       }
     }
-    console.log("Миграции актуальны");
+    console.log("SQLite: миграции актуальны");
   } finally {
-    await client.end();
+    client.close();
   }
 }
 await migrate();

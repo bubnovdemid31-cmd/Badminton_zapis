@@ -1,7 +1,7 @@
 import { createInterface } from "node:readline/promises";
 import { hash } from "bcryptjs";
 import { z } from "zod";
-import { db, atomic, audit } from "../server/db.js";
+import { db, atomic, audit, searchText } from "../server/db.js";
 async function password() {
   if (process.env.ADMIN_PASSWORD) return process.env.ADMIN_PASSWORD;
   if (!process.stdin.isTTY)
@@ -66,7 +66,13 @@ try {
         "Этот email уже существует. Команда не повышает права существующих аккаунтов.",
       );
     const user = await tx.user.create({
-      data: { email, name, passwordHash, role: "ADMIN" },
+      data: {
+        email,
+        name,
+        passwordHash,
+        role: "ADMIN",
+        searchText: searchText(name, email),
+      },
     });
     await audit(tx, user.id, "ADMIN_CREATED", user.id, { via: "local CLI" });
     return user;

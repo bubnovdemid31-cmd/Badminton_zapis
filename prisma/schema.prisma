@@ -3,7 +3,7 @@ generator client {
   engineType = "client"
 }
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url = env("DATABASE_URL")
 }
 enum Role {
@@ -32,6 +32,7 @@ model User {
   name String
   email String @unique
   phone String @default("")
+  searchText String @default("")
   passwordHash String
   role Role @default(CLIENT)
   createdAt DateTime @default(now())
@@ -67,8 +68,8 @@ model Series {
 }
 model Session {
   id String @id @default(cuid())
-  startsAt DateTime @db.Timestamptz(3)
-  endsAt DateTime @db.Timestamptz(3)
+  startsAt DateTime
+  endsAt DateTime
   trainerId String
   trainer Trainer @relation(fields:[trainerId], references:[id])
   courtId String
@@ -93,6 +94,7 @@ model Booking {
   guestName String?
   guestPhone String?
   participantKey String
+  searchText String @default("")
   childName String?
   childAge Int?
   status BookingStatus @default(BOOKED)
@@ -122,4 +124,11 @@ model RateLimit {
   key String @id
   count Int
   expiresAt DateTime
+}
+
+model WebSession {
+  id String @id
+  data String
+  expiresAt DateTime
+  @@index([expiresAt])
 }

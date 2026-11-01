@@ -9,3 +9,8 @@ test-results/
 dist/
 coverage/
 *.log
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*

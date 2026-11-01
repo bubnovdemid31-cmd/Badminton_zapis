@@ -11,10 +11,14 @@ import {
   attendance,
 } from "../server/booking.js";
 import { saveSession, cancelSession, series } from "../server/schedule.js";
-import { app, pool } from "../server/app.js";
+import { app } from "../server/app.js";
 import type { Server } from "node:http";
-if (!new URL(process.env.DATABASE_URL!).pathname.endsWith("_test"))
-  throw new Error("Tests require an isolated _test database");
+if (
+  !process.env.TEST_DATABASE_URL ||
+  process.env.DATABASE_URL !== process.env.TEST_DATABASE_URL ||
+  !process.env.TEST_DATABASE_URL.endsWith("club-test.db")
+)
+  throw new Error("Tests require an isolated temporary SQLite file");
 const a: Actor = { id: "a", role: "CLIENT" },
   b: Actor = { id: "b", role: "CLIENT" },
   root: Actor = { id: "admin", role: "ADMIN" };
@@ -49,9 +53,20 @@ before(async () => {
   base = "http://127.0.0.1:" + (server.address() as { port: number }).port;
 });
 beforeEach(async () => {
-  await db.$executeRawUnsafe(
-    'TRUNCATE "Audit", "Booking", "Session", "Series", "Court", "Venue", "Trainer", "User", "Settings", "RateLimit", "WebSession" CASCADE',
-  );
+  for (const table of [
+    "Audit",
+    "Booking",
+    "Session",
+    "Series",
+    "Court",
+    "Venue",
+    "Trainer",
+    "User",
+    "Settings",
+    "RateLimit",
+    "WebSession",
+  ])
+    await db.$executeRawUnsafe('DELETE FROM "' + table + '"');
   await db.settings.create({ data: { id: "club" } });
   for (const actor of [a, b, root])
     await db.user.create({
@@ -75,7 +90,6 @@ after(async () => {
   await new Promise<void>((resolve, reject) =>
     server.close((e) => (e ? reject(e) : resolve())),
   );
-  await pool.end();
   await db.$disconnect();
 });
 test("two concurrent clients compete for the final seat: exactly one succeeds", async () => {
@@ -135,7 +149,7 @@ test("atomic transfer rolls back if the target is full, then succeeds after rele
     "CANCELLED_CLIENT",
   );
 });
-test("trainer and court intersections are rejected by service and PostgreSQL constraints", async () => {
+test("trainer and court intersections are rejected by service and SQLite constraints", async () => {
   const old = await fixtureSession("s1");
   const input = {
     startsAt: old.startsAt.toISOString(),
@@ -509,4 +523,110 @@ test("series reports nonexistent local time during daylight saving transition", 
   assert.equal(result.conflicts.length, 1);
   assert.match(result.conflicts[0].message, /перевода часов/);
   assert.equal(await db.series.count(), 0);
+});
+
+test("SQLite writer lock protects the last seat across independent Node processes", async () => {
+  const { fork } = await import("node:child_process");
+  await fixtureSession("s1");
+  const clients = ["a", "b"].map((id) =>
+    fork("tests/booking-worker.ts", [], {
+      execArgv: ["--import", "tsx"],
+      env: { ...process.env, BOOKING_ACTOR: id },
+      stdio: ["ignore", "ignore", "pipe", "ipc"],
+    }),
+  );
+  const results = clients.map(
+    (child) =>
+      new Promise<{ ok: boolean; error?: string }>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          child.kill();
+          reject(new Error("Booking worker timed out"));
+        }, 10000);
+        child.on("message", (value: unknown) => {
+          const result = value as {
+            ok: boolean;
+            error?: string;
+            ready?: boolean;
+          };
+          if (!result.ready) {
+            clearTimeout(timer);
+            resolve(result);
+          }
+        });
+        child.on("error", (error) => {
+          clearTimeout(timer);
+          reject(error);
+        });
+        child.on("exit", (code) => {
+          if (code) {
+            clearTimeout(timer);
+            reject(new Error("Booking worker exited with " + code));
+          }
+        });
+      }),
+  );
+  try {
+    await Promise.all(
+      clients.map(
+        (child) =>
+          new Promise<void>((resolve) =>
+            child.once("message", () => resolve()),
+          ),
+      ),
+    );
+    for (const child of clients) child.send("book");
+    const values = await Promise.all(results);
+    assert.equal(values.filter((v) => v.ok).length, 1);
+    assert.match(values.find((v) => !v.ok)!.error!, /места/);
+    assert.equal(await db.booking.count({ where: { status: "BOOKED" } }), 1);
+  } finally {
+    await Promise.all(
+      clients.map((child) =>
+        child.exitCode === null
+          ? new Promise<void>((resolve) => {
+              child.once("exit", () => resolve());
+              child.kill();
+            })
+          : Promise.resolve(),
+      ),
+    );
+  }
+});
+
+test("SQLite constraints prevent overbooking and invalid foreign keys outside service code", async () => {
+  await fixtureSession("s1");
+  await book(a, { sessionId: "s1" });
+  await assert.rejects(
+    db.booking.create({
+      data: { sessionId: "s1", userId: "b", participantKey: "user:b:adult" },
+    }),
+  );
+  await assert.rejects(
+    db.court.create({
+      data: { name: "Несуществующая площадка", venueId: "missing" },
+    }),
+  );
+  assert.equal(await db.booking.count({ where: { status: "BOOKED" } }), 1);
+});
+
+test("SQLite sessions are persisted and Unicode client search remains case insensitive", async () => {
+  const client = new BrowserClient();
+  await client.login();
+  await client.request("/account/profile", "PATCH", {
+    name: "ЁЛКИН Иван",
+    phone: "+7 999 123 45 67",
+  });
+  assert.equal(await db.webSession.count(), 1);
+  const row = await db.webSession.findFirstOrThrow();
+  assert.equal(JSON.parse(row.data).userId, "a");
+  const rootClient = new BrowserClient();
+  assert.equal((await rootClient.login("admin@test.ru")).status, 200);
+  const found = await rootClient.request(
+    "/admin/clients?q=" + encodeURIComponent("ёлкин"),
+  );
+  assert.equal(found.status, 200);
+  assert.equal(found.data.length, 1);
+  assert.equal(found.data[0].id, "a");
+  await client.request("/auth/logout", "POST", {});
+  assert.equal(await db.webSession.count({ where: { id: row.id } }), 0);
 });
