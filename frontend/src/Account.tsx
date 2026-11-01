@@ -6,7 +6,7 @@ import {
   dateTime,
   formats,
   statuses,
-  money,
+  sessionPrice,
   type Booking,
   type User,
   type PublicData,
@@ -205,7 +205,7 @@ export function Account({
                       ? `Участник: ${b.childName}, ${b.childAge} лет`
                       : `Участник: ${user.name}`}
                   </p>
-                  <strong>{money(b.session.price)}</strong>
+                  <strong>{sessionPrice(b.session)}</strong>
                 </div>
                 <div className="booking-actions">
                   {editable ? (
@@ -280,7 +280,8 @@ export function Account({
                   {targets.map((s) => (
                     <option key={s.id} value={s.id}>
                       {dateTime(s.startsAt, data.club.timezone)} ·{" "}
-                      {s.trainer.name} · {s.court.venue.name} · {money(s.price)}
+                      {s.trainer.name} · {s.court.venue.name} ·{" "}
+                      {sessionPrice(s)}
                     </option>
                   ))}
                 </select>

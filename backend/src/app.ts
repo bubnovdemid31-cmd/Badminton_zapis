@@ -309,7 +309,9 @@ app.get("/api/sessions", async (req, res) => {
     .object({
       venue: z.string().optional(),
       trainer: z.string().optional(),
-      format: z.enum(["GROUP", "PERSONAL", "KIDS"]).optional(),
+      format: z
+        .enum(["GROUP", "PERSONAL", "KIDS", "MINIGROUP", "SPLIT"])
+        .optional(),
       level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]).optional(),
     })
     .parse(req.query);

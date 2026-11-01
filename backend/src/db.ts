@@ -1,4 +1,5 @@
 import "dotenv/config";
+import clubInfo from "../club-info.json" with { type: "json" };
 import { PrismaClient, Prisma } from "@prisma/client";
 import { PrismaLibSQL } from "@prisma/adapter-libsql";
 import { databaseUrl } from "./database-path.js";
@@ -88,7 +89,7 @@ export async function settings(tx: Tx | PrismaClient = db) {
   return tx.settings.upsert({
     where: { id: "club" },
     update: {},
-    create: { id: "club" },
+    create: { id: "club", publicInfo: clubInfo },
   });
 }
 export type Actor = { id: string; role: "CLIENT" | "ADMIN" };

@@ -8,7 +8,7 @@ import {
   levels,
   statuses,
   dateTime,
-  money,
+  sessionPrice,
   type PublicData,
   type Session,
   type Booking,
@@ -253,7 +253,7 @@ export function Admin({
                             {s._count.bookings}/{s.capacity} участников
                           </small>
                         </td>
-                        <td>{money(s.price)}</td>
+                        <td>{sessionPrice(s)}</td>
                         <td>
                           <div className="actions">
                             <button
@@ -748,10 +748,37 @@ export function Admin({
 function Selects({
   resources,
   item,
+  data,
 }: {
   resources: Resources;
   item?: Session;
+  data: PublicData;
 }) {
+  const [format, setFormat] = useState(item?.format ?? "GROUP");
+  const [courtId, setCourtId] = useState(item?.courtId ?? "");
+  const venue = resources.courts.find((c) => c.id === courtId)?.venue;
+  const offer = data.club.publicInfo?.pricing.find(
+    (p) => p.format === format && (!p.venue || p.venue === venue?.name),
+  );
+  const original = !!item && format === item.format && courtId === item.courtId;
+  const defaultCapacity =
+    format === "PERSONAL"
+      ? 1
+      : format === "MINIGROUP"
+        ? 16
+        : format === "GROUP"
+          ? 26
+          : format === "SPLIT"
+            ? 2
+            : 8;
+  const defaultPrice =
+    offer?.price ??
+    (format === "PERSONAL"
+      ? 300000
+      : format === "MINIGROUP" || format === "SPLIT"
+        ? 150000
+        : 65000);
+  const presetKey = String(format) + courtId;
   return (
     <>
       <label>
@@ -770,7 +797,12 @@ function Selects({
       </label>
       <label>
         Корт и площадка
-        <select name="courtId" defaultValue={item?.courtId} required>
+        <select
+          name="courtId"
+          value={courtId}
+          onChange={(e) => setCourtId(e.target.value)}
+          required
+        >
           <option value="">Выберите корт</option>
           {resources.courts
             .filter(
@@ -786,7 +818,11 @@ function Selects({
       </label>
       <label>
         Формат
-        <select name="format" defaultValue={item?.format}>
+        <select
+          name="format"
+          value={format}
+          onChange={(e) => setFormat(e.target.value as Session["format"])}
+        >
           {Object.entries(formats).map(([v, n]) => (
             <option key={v} value={v}>
               {n}
@@ -807,16 +843,26 @@ function Selects({
       <Field
         label="Стоимость, ₽"
         name="priceRub"
+        key={"price" + presetKey}
         type="number"
-        value={item ? item.price / 100 : 900}
+        value={original ? item.price / 100 : defaultPrice / 100}
         min={0}
         max={1000000}
       />
+      <label className="check">
+        <input
+          type="checkbox"
+          name="priceFrom"
+          defaultChecked={item?.priceFrom ?? false}
+        />
+        Цена «от» — итоговую стоимость уточнить до записи
+      </label>
       <Field
         label="Вместимость (для индивидуальной — 1)"
         name="capacity"
+        key={"capacity" + presetKey}
         type="number"
-        value={item?.capacity ?? 8}
+        value={original ? item.capacity : defaultCapacity}
         min={1}
         max={100}
       />
@@ -840,6 +886,7 @@ function sessionData(f: FormData) {
     price: Math.round(Number(f.get("priceRub")) * 100),
     capacity: Number(f.get("capacity")),
     open: f.get("open") === "on",
+    priceFrom: f.get("priceFrom") === "on",
   };
 }
 function SessionForm({
@@ -901,7 +948,7 @@ function SessionForm({
         type="datetime-local"
         value={item ? local(item.endsAt) : undefined}
       />
-      <Selects resources={resources} item={item} />
+      <Selects resources={resources} item={item} data={data} />
       {!!item?._count.bookings && (
         <>
           <Notice>
@@ -980,7 +1027,7 @@ function SeriesForm({
           min={15}
           max={480}
         />
-        <Selects resources={resources} />
+        <Selects resources={resources} data={data} />
         {preview && (
           <Notice error={!!preview.conflicts.length}>
             {preview.saved

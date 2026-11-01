@@ -14,6 +14,8 @@ enum Format {
   GROUP
   PERSONAL
   KIDS
+  MINIGROUP
+  SPLIT
 }
 enum Level {
   BEGINNER
@@ -79,6 +81,7 @@ model Session {
   format Format
   level Level
   price Int
+  priceFrom Boolean @default(false)
   capacity Int
   open Boolean @default(true)
   cancelled Boolean @default(false)
@@ -119,6 +122,7 @@ model Settings {
   email String @default("")
   address String @default("Адрес уточняется")
   cancelHours Int @default(12)
+  publicInfo Json?
 }
 model RateLimit {
   key String @id

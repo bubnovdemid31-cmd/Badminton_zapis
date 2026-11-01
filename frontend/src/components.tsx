@@ -8,7 +8,7 @@ import {
 import {
   formats,
   levels,
-  money,
+  sessionPrice,
   dateTime,
   time,
   type Session,
@@ -224,7 +224,7 @@ export function SessionCard({
         <p className="muted small">{s.court.venue.address}</p>
       </div>
       <div className="session-bottom">
-        <strong>{money(s.price)}</strong>
+        <strong>{sessionPrice(s)}</strong>
         <span className={left <= 2 ? "few" : "muted"}>
           {left > 0 ? `${left} из ${s.capacity} мест` : "Мест нет"}
         </span>

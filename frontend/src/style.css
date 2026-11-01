@@ -2274,3 +2274,137 @@ footer {
     width: 180px;
   }
 }
+
+/* Published club rates and weekly timetable. */
+.club-price {
+  font-size: 23px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-align: right;
+}
+.price-capacity {
+  display: block;
+  margin-top: 5px;
+  color: #918778;
+  font-size: 11px;
+}
+.weekly-schedule {
+  margin: 30px 0 55px;
+}
+.weekly-legend {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+  font-size: 12px;
+  color: #716c63;
+}
+.weekly-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.venue-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin-right: 7px;
+}
+.venue-dot.youth {
+  background: #edc33d;
+  border: 1px solid #d2ad32;
+}
+.venue-dot.arena {
+  background: #bf1722;
+}
+.weekly-table {
+  border-top: 1px solid #c9c5bd;
+}
+.weekly-day {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 20px;
+  border-bottom: 1px solid #d9d7d2;
+  padding: 18px 0;
+}
+.weekly-day h3 {
+  font-size: 15px;
+  margin: 4px 0;
+}
+.weekly-slot {
+  display: grid;
+  grid-template-columns: 130px 1fr 130px;
+  gap: 18px;
+  padding: 7px 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.weekly-slot > strong {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.weekly-slot small {
+  display: block;
+  color: #8c8275;
+  font-size: 11px;
+  margin: 4px 0 0 16px;
+}
+.weekly-trainer {
+  color: #6f665b;
+  text-align: right;
+}
+.weekly-note {
+  margin: 20px 0 0;
+  max-width: 800px;
+}
+.booking-dates-title {
+  font-size: 29px;
+}
+@media (max-width: 800px) {
+  .weekly-day {
+    grid-template-columns: 110px 1fr;
+    gap: 10px;
+  }
+  .weekly-slot {
+    grid-template-columns: 100px 1fr;
+    gap: 6px 15px;
+  }
+  .weekly-trainer {
+    grid-column: 2;
+    text-align: left;
+  }
+  .club-price {
+    grid-column: 2/-1;
+    text-align: left;
+    font-size: 20px;
+  }
+}
+@media (max-width: 560px) {
+  .weekly-schedule {
+    margin: 30px 0 40px;
+  }
+  .weekly-day {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .weekly-day h3 {
+    font-size: 17px;
+  }
+  .weekly-slot {
+    grid-template-columns: 95px 1fr;
+  }
+  .weekly-legend {
+    font-size: 11px;
+    gap: 12px;
+  }
+  .club-price {
+    grid-column: auto;
+    margin-top: 4px;
+  }
+  .club-prices .format-card {
+    gap: 8px;
+  }
+}

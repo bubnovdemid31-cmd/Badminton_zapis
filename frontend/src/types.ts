@@ -1,4 +1,4 @@
-export type Format = "GROUP" | "PERSONAL" | "KIDS";
+export type Format = "GROUP" | "PERSONAL" | "KIDS" | "MINIGROUP" | "SPLIT";
 export type Level = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 export type User = {
   id: string;
@@ -35,6 +35,7 @@ export type Club = {
   email: string;
   address: string;
   cancelHours: number;
+  publicInfo: ClubInfo | null;
 };
 export type Session = {
   id: string;
@@ -47,6 +48,7 @@ export type Session = {
   format: Format;
   level: Level;
   price: number;
+  priceFrom: boolean;
   capacity: number;
   open: boolean;
   cancelled: boolean;
@@ -69,6 +71,8 @@ export type Booking = {
 export type PublicData = { club: Club; trainers: Trainer[]; venues: Venue[] };
 export const formats: Record<Format, string> = {
   GROUP: "Групповая",
+  MINIGROUP: "Мини-группа",
+  SPLIT: "Сплит",
   PERSONAL: "Индивидуальная",
   KIDS: "Детская",
 };
@@ -104,3 +108,32 @@ export const time = (s: string, tz: string) =>
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(s));
+
+export type ClubInfo = {
+  version: number;
+  venues: { id: string; name: string; address: string }[];
+  pricing: {
+    id: string;
+    title: string;
+    venue: string | null;
+    format: Format;
+    price: number;
+    priceFrom: boolean;
+    capacity: number | null;
+  }[];
+  week: {
+    day: string;
+    slots: {
+      venueId: string;
+      startsAt: string;
+      endsAt: string;
+      trainer: string | null;
+      format: Format;
+      levelLabel: string | null;
+      capacity: number;
+    }[];
+  }[];
+  shopUrl?: string;
+};
+export const sessionPrice = (s: { price: number; priceFrom?: boolean }) =>
+  (s.priceFrom ? "от " : "") + money(s.price);

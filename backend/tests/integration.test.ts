@@ -630,3 +630,46 @@ test("SQLite sessions are persisted and Unicode client search remains case insen
   await client.request("/auth/logout", "POST", {});
   assert.equal(await db.webSession.count({ where: { id: row.id } }), 0);
 });
+
+test("mini-group and split sessions accept club pricing and retain starting-price flags", async () => {
+  const client = new BrowserClient();
+  await client.login("admin@test.ru");
+  const base = {
+    startsAt: future(48).toISOString(),
+    endsAt: future(49).toISOString(),
+    trainerId: "t1",
+    courtId: "c1",
+    level: "BEGINNER",
+    open: true,
+  };
+  const mini = await client.request("/admin/sessions", "POST", {
+    ...base,
+    format: "MINIGROUP",
+    price: 150000,
+    capacity: 16,
+    priceFrom: false,
+  });
+  assert.equal(mini.status, 201);
+  assert.equal(mini.data.capacity, 16);
+  const filtered = await client.request("/sessions?format=MINIGROUP");
+  assert.equal(filtered.status, 200);
+  assert.equal(filtered.data.length, 1);
+  assert.equal(filtered.data[0].price, 150000);
+  assert.equal(filtered.data[0].priceFrom, false);
+  const split = await client.request("/admin/sessions", "POST", {
+    ...base,
+    startsAt: future(72).toISOString(),
+    endsAt: future(73).toISOString(),
+    format: "SPLIT",
+    price: 150000,
+    capacity: 2,
+    priceFrom: true,
+  });
+  assert.equal(split.status, 201);
+  assert.equal(split.data.priceFrom, true);
+  const booked = await book(a, { sessionId: split.data.id });
+  assert.equal(booked.status, "BOOKED");
+  const own = await getBooking(a, booked.id);
+  assert.equal(own.session.priceFrom, true);
+  assert.equal(own.session.price, 150000);
+});

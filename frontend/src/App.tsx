@@ -1,9 +1,10 @@
+import { ClubPrices, WeeklySchedule } from "./ClubInformation";
 import { useEffect, useState, useCallback } from "react";
 import { api } from "./api";
 import {
   formats,
   levels,
-  money,
+  sessionPrice,
   dateTime,
   type PublicData,
   type User,
@@ -168,7 +169,7 @@ export function App() {
               title="Тренировки для каждого"
               text="Первый выход на корт или подготовка к турниру — подберём комфортный темп."
             />
-            <Formats />
+            <ClubPrices data={data} />
             <div className="panel">
               <h2>Что взять на тренировку</h2>
               <p>
@@ -178,6 +179,18 @@ export function App() {
               <a className="button" href="#/schedule">
                 Выбрать занятие ↗
               </a>
+              {data.club.publicInfo?.shopUrl?.startsWith("https://t.me/") && (
+                <p className="small" style={{ marginTop: 20, marginBottom: 0 }}>
+                  <a
+                    className="text-link"
+                    href={data.club.publicInfo.shopUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Одежда и аксессуары в Telegram
+                  </a>
+                </p>
+              )}
             </div>
           </section>
         )}
@@ -216,8 +229,8 @@ export function App() {
                   поддерживаем на каждом шаге и знакомим с командой.
                 </p>
                 <p>
-                  На сайте сейчас представлены демонстрационные площадки и
-                  тренеры. Перед посещением уточните информацию у клуба.
+                  Адрес площадки и условия первого визита уточните у
+                  администратора клуба.
                 </p>
               </div>
             </div>
@@ -337,8 +350,14 @@ export function App() {
               (+new Date(selected.endsAt) - +new Date(selected.startsAt)) /
                 60000,
             )}{" "}
-            мин · {money(selected.price)}
+            мин · {sessionPrice(selected)}
           </p>
+          {selected.priceFrom && (
+            <Notice>
+              Указана начальная стоимость. Итоговую цену согласуйте с тренером
+              до занятия.
+            </Notice>
+          )}
           <Notice>
             Отмена и перенос — не позднее чем за {club.cancelHours} ч до начала.
             Позже свяжитесь с администратором. Оплата в клубе.
@@ -394,49 +413,6 @@ export function PageTitle({
       <span className="eyebrow">{eyebrow}</span>
       <h1>{title}</h1>
       {text && <p>{text}</p>}
-    </div>
-  );
-}
-function Formats() {
-  return (
-    <div className="formats-grid">
-      {(
-        [
-          [
-            "GROUP",
-            "01",
-            "Игра в команде",
-            "Техника, динамичные розыгрыши и поддержка единомышленников.",
-          ],
-          [
-            "PERSONAL",
-            "02",
-            "В своём темпе",
-            "Всё внимание тренера — вашей технике и вашим целям.",
-          ],
-          [
-            "KIDS",
-            "03",
-            "Большое начало",
-            "Знакомство со спортом через игру. Запись из аккаунта родителя.",
-          ],
-        ] as const
-      ).map(([f, n, title, text]) => (
-        <a
-          className={"format-card format-" + f.toLowerCase()}
-          href={"#/schedule?format=" + f}
-          key={f}
-        >
-          <span className="format-num">
-            {n} / {formats[f]}
-          </span>
-          <h3>{title}</h3>
-          <p>{text}</p>
-          <span className="format-link">
-            Выбрать тренировку <b>↗</b>
-          </span>
-        </a>
-      ))}
     </div>
   );
 }
@@ -573,7 +549,7 @@ function Home({
             Все тренировки ↗
           </a>
         </div>
-        <Formats />
+        <ClubPrices data={data} />
       </section>
       <section className="soft-section">
         <div className="container section">
@@ -694,6 +670,8 @@ function Schedule({
         title="Расписание тренировок"
         text="Выбери подходящее занятие. Свободные места и подтверждение — сразу на сайте."
       />
+      <WeeklySchedule data={data} />
+      <h2 className="booking-dates-title">Запись на конкретную дату</h2>
       <div className="filter-bar">
         {(
           [
