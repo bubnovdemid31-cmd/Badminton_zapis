@@ -1680,137 +1680,542 @@ hr {
   }
 }
 
-/* Vlad Smash: monochrome surfaces, red speed accents and athletic typography. */
-.brand-logo {
-  display: block;
-  width: 220px;
-  max-width: 100%;
-  height: auto;
+/* Club identity: restrained typography, paper surfaces and practical information. */
+:root {
+  background: #faf9f6;
+  color: #18191b;
+  --green: #bf1722;
+  --border: #d9d7d2;
+  --muted: #72716e;
 }
 header {
-  border-bottom: 2px solid #101218;
+  background: #faf9f6;
+  border-bottom: 1px solid #d9d7d2;
+}
+.header-inner {
+  height: 96px;
+}
+.brand-wordmark {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+.brand-wordmark small {
+  display: block;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  margin-top: 8px;
+  color: #77736e;
+}
+.header-inner nav {
+  font-size: 12px;
+  gap: 28px;
+}
+.account-link {
+  border: 0;
+  border-bottom: 1px solid #a09d97;
+  border-radius: 0;
+  padding: 10px 0;
+}
+.hero {
+  grid-template-columns: 1.15fr 1fr;
+  gap: 90px;
+  padding-top: 78px;
+  padding-bottom: 78px;
+  align-items: start;
+}
+.hero-copy {
+  padding-top: 18px;
+}
+.hero .eyebrow {
+  letter-spacing: 2px;
+  font-weight: 500;
+  color: #7a7771;
 }
 .hero h1 {
-  font-weight: 850;
-  font-style: italic;
-  letter-spacing: -5px;
+  font-size: clamp(70px, 7.4vw, 102px);
+  font-weight: 550;
+  font-style: normal;
+  letter-spacing: -6px;
+  line-height: 1.04;
+  margin: 30px 0;
 }
 .hero h1 em {
-  color: #df101d;
+  color: #bf1722;
+  font-style: normal;
 }
-h2 {
-  font-weight: 700;
+.hero-copy > p {
+  max-width: 380px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #68655f;
+}
+.hero-actions {
+  gap: 25px;
+  margin-top: 35px;
 }
 .button {
-  border-radius: 2px;
-  font-weight: 650;
-  box-shadow: 3px 3px 0 #101218;
+  border-radius: 0;
+  box-shadow: none !important;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 14px 20px;
+  transform: none !important;
 }
 .button:hover {
-  transform: translateY(-1px);
+  background: #a5101b;
 }
 .button.outline {
-  box-shadow: none;
-  border-color: #c6c6cf;
-  color: #181a21;
+  background: transparent;
+  border-color: #c7c4bd;
+  color: #302f2c;
 }
 .button.light {
-  background: #df101d;
-  border-color: #df101d;
-  color: #fff;
-  box-shadow: 3px 3px 0 #fff;
+  background: #bf1722;
+  border-color: #bf1722;
+  color: white;
 }
-.hero-visual {
-  border-radius: 2px;
-  border-bottom: 5px solid #ed1424;
+.hero-agenda {
+  padding: 0 0 20px;
+  border-top: 3px solid #242321;
+  border-bottom: 1px solid #d9d7d2;
+  min-width: 0;
 }
-.hero-visual::after {
-  content: "";
-  position: absolute;
-  right: -25px;
-  top: 90px;
-  width: 150px;
-  height: 7px;
-  background: #ed1424;
-  transform: rotate(-22deg);
-  box-shadow:
-    0 17px 0 #ed1424,
-    0 34px 0 #ed1424;
-  pointer-events: none;
+.agenda-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 18px 0;
+  font-size: 10px;
+  color: #79756f;
 }
-.format-card,
-.session-card,
-.panel,
-.coach-art,
-.cta,
-.booking-row {
-  border-radius: 2px;
+.agenda-heading > span:first-child {
+  color: #22211f;
+}
+.agenda-date {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  font-size: 110px;
+  font-weight: 450;
+  letter-spacing: -8px;
+  line-height: 1.2;
+  padding: 15px 0 10px;
+}
+.agenda-date span {
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+}
+.hero-agenda h2 {
+  font-size: 23px;
+  letter-spacing: -0.6px;
+  font-weight: 500;
+  margin: 14px 0 23px;
+}
+.agenda-details {
+  margin: 0;
+}
+.agenda-details > div {
+  display: grid;
+  grid-template-columns: 95px 1fr;
+  gap: 15px;
+  padding: 11px 0;
+  border-top: 1px solid #e2dfd9;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.agenda-details dt {
+  color: #8a857d;
+}
+.agenda-details dd {
+  margin: 0;
+  color: #34322e;
+}
+.agenda-link {
+  display: inline-block;
+  margin: 22px 0 5px;
+  border-bottom: 1px solid #bf1722;
+  padding-bottom: 5px;
+  font-size: 12px;
+}
+.agenda-footnote {
+  font-size: 10px;
+  color: #8a857d;
+  margin: 14px 0 0;
+}
+h2 {
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -1.2px;
+}
+h3 {
+  font-weight: 500;
+}
+.eyebrow {
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  color: #888177;
+  font-weight: 500;
+}
+.section {
+  padding-top: 58px;
+  padding-bottom: 58px;
+}
+.section-head {
+  align-items: end;
+  margin-bottom: 30px;
+}
+.section-head .text-link {
+  color: #615c55;
+}
+.formats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid #c9c5bd;
 }
 .format-card {
-  border-top: 3px solid #101218;
+  display: grid;
+  grid-template-columns: 150px 1fr 1.2fr 150px;
+  align-items: center;
+  gap: 24px;
+  min-height: 0;
+  border: 0;
+  border-bottom: 1px solid #d9d7d2;
+  border-radius: 0;
+  padding: 28px 0;
+  background: transparent !important;
+  color: #262421;
+  transform: none !important;
 }
-.format-kids {
-  border-top-color: #df101d;
+.format-card:hover {
+  background: #f1eee8 !important;
 }
-.format-personal {
-  background: #191b22;
-  border-color: #191b22;
-  color: #fff;
+.format-num {
+  font-size: 11px;
+  letter-spacing: 0;
+  color: #8b8479;
 }
-.format-personal .format-num,
-.format-personal p {
-  color: #c3c4cb;
+.format-card h3 {
+  font-size: 23px;
+  margin: 0;
+  letter-spacing: -0.7px;
 }
-.format-personal .format-link {
-  border-color: #40424d;
+.format-card p {
+  font-size: 12px;
+  margin: 0;
+  color: #777168;
+  max-width: none;
+  min-height: 0;
+}
+.format-link {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.format-link b {
+  display: none;
+}
+.soft-section {
+  background: #f0ede7;
+  border-top: 1px solid #e3dfd6;
+  border-bottom: 1px solid #e3dfd6;
+}
+.session-grid {
+  gap: 22px;
 }
 .session-card {
-  border-top: 3px solid #df101d;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #b4ada1;
+  border-radius: 0;
+  padding: 24px 0 0;
+}
+.session-card .button {
+  background: transparent;
+  border: 1px solid #b9b0a3;
+  color: #312e29;
+}
+.session-card .button:hover {
+  background: #e4ded3;
+}
+.session-card h3 {
+  font-size: 23px;
+  font-weight: 500;
+}
+.session-details {
+  border-color: #d7d0c3;
+}
+.session-bottom strong {
+  font-size: 22px;
+  font-weight: 450;
+}
+.tag,
+.tag.personal,
+.tag.kids {
+  background: transparent;
+  border: 1px solid #cac3b7;
+  border-radius: 0;
+  color: #686054;
+  padding: 5px 8px;
+  font-size: 9px;
+}
+.coaches-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid #d9d7d2;
+}
+.coach {
+  display: grid;
+  grid-template-columns: 60px 1fr 1.5fr 160px;
+  align-items: start;
+  gap: 24px;
+  padding: 28px 0;
+  border-bottom: 1px solid #d9d7d2;
+}
+.coach-number {
+  font-size: 12px;
+  color: #9a9184;
+  padding-top: 5px;
+}
+.coach h3 {
+  font-size: 21px;
+  margin: 0;
+}
+.coach p {
+  font-size: 12px;
+  margin: 0;
+  line-height: 1.8;
+  color: #7d7568;
+}
+.coach > a {
+  font-size: 11px;
+  justify-self: end;
+  border-color: #cac3b7;
+  padding-top: 5px;
 }
 .cta {
-  border-left: 6px solid #df101d;
+  background: transparent;
+  color: #252320;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 15px 40px;
+  padding: 40px 0 55px;
+  margin: 0;
+  border-radius: 0;
+}
+.cta .eyebrow {
+  color: #8a8071;
+  margin: 0;
+  grid-column: 1/-1;
 }
 .cta h2 {
-  font-style: italic;
-  font-weight: 750;
+  font-size: 33px;
+  font-weight: 500;
+  font-style: normal;
+  margin: 0;
+  line-height: 1.3;
 }
-.coach-art::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 65px;
-  height: 4px;
-  background: #df101d;
+.cta .button {
+  align-self: center;
+}
+footer {
+  background: #efebe3;
+  border-top: 1px solid #ded7cb;
+}
+.panel,
+.booking-row,
+.filter-bar,
+.modal {
+  border-radius: 2px;
+}
+.auth-story img,
+.about-banner > img,
+.contact-art {
+  filter: grayscale(1);
 }
 .day-tabs button.chosen,
 .tabs button.chosen {
-  background: #101218;
-  border-color: #101218;
+  background: #252320;
+  border-color: #252320;
+}
+@media (max-width: 1000px) {
+  .hero {
+    gap: 45px;
+  }
+  .format-card {
+    grid-template-columns: 120px 1fr 1fr;
+    gap: 20px;
+  }
+  .format-link {
+    grid-column: 2/-1;
+    justify-content: flex-start;
+  }
+  .coach {
+    grid-template-columns: 40px 1fr 1.3fr;
+  }
+  .coach > a {
+    grid-column: 2/-1;
+    justify-self: start;
+  }
+  .brand-wordmark {
+    font-size: 20px;
+  }
 }
 @media (max-width: 800px) {
-  .brand-logo {
-    width: 180px;
+  .header-inner {
+    height: 80px;
+  }
+  .hero {
+    gap: 35px;
+    padding-top: 45px;
+    padding-bottom: 45px;
+  }
+  .hero h1 {
+    font-size: 72px;
+    letter-spacing: -4px;
+  }
+  .agenda-date {
+    font-size: 90px;
+  }
+  .agenda-heading {
+    font-size: 9px;
+  }
+  .agenda-heading > span:last-child {
+    display: none;
+  }
+  .agenda-details > div {
+    grid-template-columns: 70px 1fr;
+    font-size: 11px;
+  }
+  .hero-agenda h2 {
+    font-size: 20px;
+  }
+  .format-card h3 {
+    font-size: 21px;
+  }
+  .cta h2 {
+    font-size: 28px;
   }
 }
 @media (max-width: 560px) {
-  .brand-logo {
-    width: 160px;
+  .header-inner {
+    height: 75px;
   }
-  .header-inner .brand {
-    max-width: 160px;
+  .brand-wordmark {
+    font-size: 19px;
+  }
+  .brand-wordmark small {
+    font-size: 6px;
+    letter-spacing: 2.6px;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding-top: 34px;
+    padding-bottom: 10px;
+  }
+  .hero-copy {
+    padding-top: 0;
   }
   .hero h1 {
-    font-size: 78px;
+    font-size: 76px;
     letter-spacing: -4px;
+    margin: 24px 0;
   }
-  .hero-visual::after {
-    top: 65px;
-    width: 115px;
+  .hero-actions {
+    margin-top: 24px;
   }
-}
-@media (prefers-reduced-motion: reduce) {
-  .button:hover {
-    transform: none;
+  .hero-agenda {
+    padding-bottom: 20px;
+  }
+  .agenda-date {
+    font-size: 85px;
+    padding-top: 0;
+  }
+  .agenda-heading {
+    font-size: 10px;
+  }
+  .agenda-heading > span:last-child {
+    display: block;
+  }
+  .agenda-details > div {
+    grid-template-columns: 90px 1fr;
+    font-size: 12px;
+  }
+  .hero-agenda h2 {
+    font-size: 23px;
+  }
+  .section {
+    padding: 40px 0;
+  }
+  .section-head h2 {
+    font-size: 28px;
+  }
+  .format-card {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 24px 0;
+  }
+  .formats-grid > .format-card:last-child {
+    min-height: 0;
+  }
+  .format-num {
+    font-size: 10px;
+  }
+  .format-card h3 {
+    font-size: 23px;
+  }
+  .format-link {
+    grid-column: auto;
+    justify-content: flex-start;
+    margin-top: 4px;
+  }
+  .format-card p {
+    font-size: 13px;
+  }
+  .session-card {
+    padding-top: 20px;
+    padding-bottom: 12px;
+  }
+  .coach {
+    grid-template-columns: 28px 1fr;
+    gap: 10px 14px;
+    padding: 24px 0;
+  }
+  .coach-number {
+    grid-row: 1/4;
+  }
+  .coach h3 {
+    font-size: 22px;
+  }
+  .coach p {
+    font-size: 12px;
+  }
+  .coach > a {
+    grid-column: 2;
+  }
+  .cta {
+    grid-template-columns: 1fr;
+    padding: 20px 0 40px;
+  }
+  .cta h2 {
+    font-size: 29px;
+  }
+  .cta .button {
+    justify-self: start;
+  }
+  .footer-inner {
+    gap: 20px;
   }
 }

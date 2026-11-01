@@ -82,11 +82,9 @@ export function App() {
     return (
       <div className="boot">
         <div className="brand">
-          <img
-            className="brand-logo"
-            src="/vlad-smash.svg"
-            alt="Клуб бадминтона"
-          />
+          <span className="brand-wordmark">
+            VLAD SMASH<small>BADMINTON CLUB</small>
+          </span>
         </div>
         <Loading />
       </div>
@@ -107,7 +105,9 @@ export function App() {
       <header>
         <div className="container header-inner">
           <a className="brand" href="#/">
-            <img className="brand-logo" src="/vlad-smash.svg" alt={club.name} />
+            <span className="brand-wordmark">
+              VLAD SMASH<small>BADMINTON CLUB</small>
+            </span>
           </a>
           <button
             className="mobile-toggle icon-btn"
@@ -296,7 +296,9 @@ export function App() {
       <footer>
         <div className="container footer-inner">
           <a className="brand" href="#/">
-            <img className="brand-logo" src="/vlad-smash.svg" alt={club.name} />
+            <span className="brand-wordmark">
+              VLAD SMASH<small>BADMINTON CLUB</small>
+            </span>
           </a>
           <p>Больше движения. Больше игры.</p>
           <div>
@@ -415,9 +417,6 @@ function Formats() {
           <span className="format-num">
             {n} / {formats[f]}
           </span>
-          <div className="racket-mini">
-            {f === "GROUP" ? "↗" : f === "PERSONAL" ? "◎" : "✱"}
-          </div>
           <h3>{title}</h3>
           <p>{text}</p>
           <span className="format-link">
@@ -433,16 +432,7 @@ function Coaches({ data }: { data: PublicData }) {
     <div className="coaches-grid">
       {data.trainers.map((t, i) => (
         <article className="coach" key={t.id}>
-          <div className={"coach-art coach-" + (i % 3)}>
-            <span className="coach-initials">
-              {t.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </span>
-            <span className="coach-symbol">↗</span>
-            <small>КОМАНДА КЛУБА</small>
-          </div>
+          <span className="coach-number">{String(i + 1).padStart(2, "0")}</span>
           <h3>{t.name}</h3>
           <p>{t.bio}</p>
           <a href={"#/schedule?trainer=" + t.id}>Тренировки тренера ↗</a>
@@ -486,9 +476,7 @@ function Home({
     <>
       <section className="container hero">
         <div className="hero-copy">
-          <span className="eyebrow">
-            <i /> ТВОЯ НОВАЯ ХОРОШАЯ ПРИВЫЧКА
-          </span>
+          <span className="eyebrow">БАДМИНТОННЫЙ КЛУБ</span>
           <h1>
             Время
             <br />
@@ -508,56 +496,64 @@ function Home({
               Найти свой формат
             </a>
           </div>
-          <div className="hero-note">
-            <span className="tiny-circles">↗</span>
-            <span>
-              С нуля до уверенной игры.
-              <br />
-              <b>Любой уровень — хороший старт.</b>
-            </span>
-          </div>
         </div>
-        <div className="hero-visual">
-          <img
-            src="/court.svg"
-            alt="Авторская иллюстрация бадминтонного корта с ракетками и воланом"
-          />
-          <div className="visual-top">
-            БАДМИНТОН / КРУГЛЫЙ ГОД <span>↗</span>
+        <aside className="hero-agenda" aria-label="Ближайшая тренировка">
+          <div className="agenda-heading">
+            <span>Ближайшая тренировка</span>
+            <span>Расписание клуба</span>
           </div>
-          <div className="visual-note">
-            <span className="pulse" /> ТВОЁ МЕСТО НА КОРТЕ
-          </div>
-          <div className="visual-bottom">
-            <span>
-              Меньше рутины.
-              <br />
-              <b>Больше движения.</b>
-            </span>
-            <span className="circle-arrow">↗</span>
-          </div>
-        </div>
+          {err ? (
+            <Notice error>{err}</Notice>
+          ) : sessions === null ? (
+            <Loading />
+          ) : sessions.length ? (
+            <>
+              <div className="agenda-date">
+                {new Intl.DateTimeFormat("ru-RU", {
+                  timeZone: data.club.timezone,
+                  day: "2-digit",
+                }).format(new Date(sessions[0].startsAt))}
+                <span>
+                  {
+                    new Intl.DateTimeFormat("ru-RU", {
+                      timeZone: data.club.timezone,
+                      day: "numeric",
+                      month: "long",
+                    })
+                      .formatToParts(new Date(sessions[0].startsAt))
+                      .find((part) => part.type === "month")?.value
+                  }
+                </span>
+              </div>
+              <h2>{formats[sessions[0].format]} тренировка</h2>
+              <dl className="agenda-details">
+                <div>
+                  <dt>Начало</dt>
+                  <dd>{dateTime(sessions[0].startsAt, data.club.timezone)}</dd>
+                </div>
+                <div>
+                  <dt>Тренер</dt>
+                  <dd>{sessions[0].trainer.name}</dd>
+                </div>
+                <div>
+                  <dt>Площадка</dt>
+                  <dd>{sessions[0].court.venue.name}</dd>
+                </div>
+              </dl>
+              <a className="agenda-link" href="#/schedule">
+                Смотреть расписание
+              </a>
+            </>
+          ) : (
+            <Empty>Новые занятия скоро появятся в расписании.</Empty>
+          )}
+          <p className="agenda-footnote">Время клуба: {data.club.timezone}</p>
+        </aside>
       </section>
-      <div className="benefit-strip">
-        <div className="container">
-          <span>
-            ↗ <b>Для любого уровня</b>
-          </span>
-          <span>
-            ◎ <b>Внимание тренера</b>
-          </span>
-          <span>
-            ✱ <b>Группы и индивидуально</b>
-          </span>
-          <span>
-            ⌁ <b>Запись за пару минут</b>
-          </span>
-        </div>
-      </div>
       <section className="container section">
         <div className="section-head">
           <div>
-            <span className="eyebrow">ТВОЯ ИГРА — ТВОИ ПРАВИЛА</span>
+            <span className="eyebrow">ФОРМАТЫ ЗАНЯТИЙ</span>
             <h2>Выбери свой формат</h2>
           </div>
           <a className="text-link" href="#/trainings">
@@ -570,7 +566,7 @@ function Home({
         <div className="container section">
           <div className="section-head">
             <div>
-              <span className="eyebrow">УВИДИМСЯ НА КОРТЕ</span>
+              <span className="eyebrow">РАСПИСАНИЕ</span>
               <h2>Ближайшие тренировки</h2>
             </div>
             <a className="text-link" href="#/schedule">
@@ -598,7 +594,7 @@ function Home({
       <section className="container section">
         <div className="section-head">
           <div>
-            <span className="eyebrow">РЯДОМ С ТОБОЙ</span>
+            <span className="eyebrow">ТРЕНЕРЫ</span>
             <h2>Команда, которая поддержит</h2>
           </div>
           <a className="text-link" href="#/coaches">
@@ -609,7 +605,7 @@ function Home({
       </section>
       <section className="container">
         <div className="cta">
-          <span className="eyebrow">ПЕРВЫЙ ШАГ — САМЫЙ ПРОСТОЙ</span>
+          <span className="eyebrow">ОНЛАЙН-ЗАПИСЬ</span>
           <h2>
             Твоя следующая игра
             <br />
@@ -618,7 +614,6 @@ function Home({
           <a className="button light" href="#/schedule">
             Выбрать тренировку ↗
           </a>
-          <span className="cta-art">↗</span>
         </div>
       </section>
     </>
