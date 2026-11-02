@@ -5,11 +5,21 @@ meta:
     version: 22
 
 build:
+  skip: false
   additionalCommands: npm ci --include=dev --ignore-scripts && npm run build
   artifacts:
     "*": /
 
 run:
-  command: node dist/backend/scripts/migrate.js && node dist/backend/prisma/seed.js && node dist/backend/src/index.js
+  scriptName: ""
+  scriptArguments: ""
+  nodeArguments: ""
+  command: >-
+    node dist/backend/scripts/migrate.js &&
+    node dist/backend/prisma/seed.js &&
+    (if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_NAME" ] && [ -n "$ADMIN_PASSWORD" ];
+    then node dist/backend/scripts/create-admin.js || true;
+    fi) &&
+    node dist/backend/src/index.js
   persistenceMount: /data
   containerPort: 3001
