@@ -1,0 +1,15 @@
+meta:
+  environment: node
+  toolchain:
+    name: npm
+    version: 22
+
+build:
+  additionalCommands: npm ci --include=dev --ignore-scripts && npm run build
+  artifacts:
+    "*": /
+
+run:
+  command: node dist/backend/scripts/migrate.js && node dist/backend/prisma/seed.js && node dist/backend/src/index.js
+  persistenceMount: /data
+  containerPort: 3001
