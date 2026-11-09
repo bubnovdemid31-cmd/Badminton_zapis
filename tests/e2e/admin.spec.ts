@@ -43,7 +43,10 @@ test.afterAll(async () => {
     await db.trainer.delete({ where: { id: trainerId } });
   }
   if (courtId) await db.court.delete({ where: { id: courtId } });
-  if (email) await db.user.deleteMany({ where: { email } });
+  if (email) {
+    await db.ledgerEntry.deleteMany({ where: { user: { email } } });
+    await db.user.deleteMany({ where: { email } });
+  }
   await db.$disconnect();
 });
 test("admin creates a session and a phone guest booking, then cancels it", async ({
@@ -136,4 +139,102 @@ test("admin creates a session and a phone guest booking, then cancels it", async
     .getByRole("button", { name: "Журнал действий", exact: true })
     .click();
   await expect(page.getByText(/SESSION_CANCELLED/).first()).toBeVisible();
+});
+
+test("admin manually tops up a balance and assigns the participant level", async ({
+  page,
+}) => {
+  await page.goto("/#/login");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Войти", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Панель администратора", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Клиенты", exact: true }).click();
+  await page.getByRole("textbox", { name: "Поиск клиентов" }).fill(email);
+  const row = page.getByRole("row").filter({ hasText: email });
+  await row.getByRole("button", { name: /операции/ }).click();
+  const dialog = page.getByRole("dialog", {
+    name: "Баланс: Тестовый администратор",
+  });
+  await dialog.getByLabel("Сумма в рублях", { exact: false }).fill("5000");
+  await dialog
+    .getByLabel("Причина / комментарий")
+    .fill("Тестовое ручное пополнение");
+  await dialog
+    .getByRole("button", { name: "Сохранить", exact: true })
+    .first()
+    .click();
+  await expect(
+    dialog.getByRole("heading", { name: /5.*000/ }).first(),
+  ).toBeVisible();
+  await dialog
+    .getByRole("combobox", { name: "Уровень", exact: true })
+    .selectOption("beginner");
+  await dialog
+    .getByRole("button", { name: "Сохранить", exact: true })
+    .last()
+    .click();
+  await expect
+    .poll(
+      async () =>
+        (await db.user.findUniqueOrThrow({ where: { email } })).playerLevelId,
+    )
+    .toBe("beginner");
+});
+
+test("admin corrects a missed attendance and the balance is charged", async ({
+  page,
+}) => {
+  const user = await db.user.findUniqueOrThrow({ where: { email } });
+  const balance = user.balance;
+  const session = await db.session.create({
+    data: {
+      startsAt: new Date(Date.now() - 7200000),
+      endsAt: new Date(Date.now() - 3600000),
+      trainerId,
+      courtId,
+      format: "GROUP",
+      level: "BEGINNER",
+      capacity: 5,
+      price: 90000,
+    },
+  });
+  await db.booking.create({
+    data: {
+      sessionId: session.id,
+      userId: user.id,
+      participantKey: "user:" + user.id + ":adult",
+      status: "MISSED",
+      priceSnapshot: 90000,
+    },
+  });
+  await page.goto("/#/login");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Войти", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Панель администратора", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Записи", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Исправить посещение", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Исправить посещение" });
+  await dialog
+    .getByRole("combobox", { name: "Статус" })
+    .selectOption("ATTENDED");
+  await dialog
+    .getByLabel("Причина исправления")
+    .fill("Участник присутствовал, исправляем ошибку");
+  await dialog.getByRole("button", { name: "Сохранить", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect
+    .poll(
+      async () =>
+        (await db.user.findUniqueOrThrow({ where: { email } })).balance,
+    )
+    .toBe(balance - 90000);
+  await page.waitForLoadState("networkidle");
 });

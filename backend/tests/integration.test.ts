@@ -54,6 +54,8 @@ before(async () => {
 });
 beforeEach(async () => {
   for (const table of [
+    "SessionLevel",
+    "LedgerEntry",
     "Audit",
     "Booking",
     "Session",
@@ -62,6 +64,7 @@ beforeEach(async () => {
     "Venue",
     "Trainer",
     "User",
+    "PlayerLevel",
     "Settings",
     "RateLimit",
     "WebSession",
@@ -727,4 +730,128 @@ test("upgrading an existing database removes the old catalogue from all active l
   const overview = await browser.request("/admin/overview");
   assert.equal(overview.data.nextSessions.length, 0);
   assert.equal(overview.data.active, 0);
+});
+
+test("deposit topup is idempotent and attendance charges the booking price once", async () => {
+  const { adjustBalance } = await import("../src/finance.js");
+  const { randomUUID } = await import("node:crypto");
+  const input = {
+    amount: 500000,
+    method: "CASH" as const,
+    reason: "Пополнение наличными",
+    operationKey: randomUUID(),
+  };
+  await Promise.all([
+    adjustBalance(root, a.id, input),
+    adjustBalance(root, a.id, input),
+  ]);
+  assert.equal(
+    (await db.user.findUniqueOrThrow({ where: { id: a.id } })).balance,
+    500000,
+  );
+  await assert.rejects(
+    adjustBalance(a, a.id, { ...input, operationKey: randomUUID() }),
+  );
+  await assert.rejects(adjustBalance(root, a.id, { ...input, amount: 100 }));
+  await fixtureSession("deposit", 48, 2);
+  const booking = await book(a, { sessionId: "deposit" });
+  assert.equal(
+    (await db.user.findUniqueOrThrow({ where: { id: a.id } })).balance,
+    500000,
+  );
+  await db.session.update({
+    where: { id: "deposit" },
+    data: { startsAt: future(-3), endsAt: future(-2), price: 100000 },
+  });
+  const results = await Promise.allSettled([
+    attendance(root, booking.id, "ATTENDED"),
+    attendance(root, booking.id, "ATTENDED"),
+  ]);
+  assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
+  assert.equal(
+    (await db.user.findUniqueOrThrow({ where: { id: a.id } })).balance,
+    410000,
+  );
+  assert.equal(await db.ledgerEntry.count({ where: { userId: a.id } }), 2);
+});
+test("cancellation and absence do not charge the deposit", async () => {
+  await fixtureSession("cancel-deposit", 48, 2);
+  const cancelled = await book(a, { sessionId: "cancel-deposit" });
+  await cancelBooking(a, cancelled.id);
+  const missed = await book(b, { sessionId: "cancel-deposit" });
+  await db.session.update({
+    where: { id: "cancel-deposit" },
+    data: { startsAt: future(-3), endsAt: future(-2) },
+  });
+  await attendance(root, missed.id, "MISSED");
+  assert.equal(await db.ledgerEntry.count(), 0);
+});
+
+test("player levels restrict client booking while administrator can make an exception", async () => {
+  await fixtureSession("level-session", 48, 5);
+  await db.playerLevel.create({
+    data: { id: "level-one", name: "Начинающий" },
+  });
+  await db.sessionLevel.create({
+    data: { sessionId: "level-session", levelId: "level-one" },
+  });
+  await assert.rejects(book(a, { sessionId: "level-session" }), /уровень/);
+  await db.user.update({
+    where: { id: a.id },
+    data: { playerLevelId: "level-one" },
+  });
+  await book(a, { sessionId: "level-session" });
+  await book(root, { sessionId: "level-session", userId: b.id });
+});
+test("credit policy includes future booking costs and releases credit on cancellation", async () => {
+  await fixtureSession("credit-one", 48, 5);
+  await fixtureSession("credit-two", 72, 5);
+  await db.settings.update({
+    where: { id: "club" },
+    data: { balancePolicy: "CREDIT" },
+  });
+  await db.user.update({ where: { id: a.id }, data: { creditLimit: 90000 } });
+  const booking = await book(a, { sessionId: "credit-one" });
+  await assert.rejects(book(a, { sessionId: "credit-two" }), /Недостаточно/);
+  await cancelBooking(a, booking.id);
+  await book(a, { sessionId: "credit-two" });
+  assert.equal(
+    (await db.user.findUniqueOrThrow({ where: { id: a.id } })).balance,
+    0,
+  );
+});
+
+test("attendance correction reverses and restores the charge without erasing history", async () => {
+  const { correctAttendance } = await import("../src/booking.js");
+  const { randomUUID } = await import("node:crypto");
+  await fixtureSession("correct-deposit", 48, 2);
+  const booking = await book(a, { sessionId: "correct-deposit" });
+  await db.session.update({
+    where: { id: "correct-deposit" },
+    data: { startsAt: future(-3), endsAt: future(-2) },
+  });
+  await attendance(root, booking.id, "ATTENDED");
+  await correctAttendance(
+    root,
+    booking.id,
+    "MISSED",
+    "Ошибочно отметили присутствие",
+    randomUUID(),
+  );
+  assert.equal(
+    (await db.user.findUniqueOrThrow({ where: { id: a.id } })).balance,
+    0,
+  );
+  await correctAttendance(
+    root,
+    booking.id,
+    "ATTENDED",
+    "Присутствие подтверждено",
+    randomUUID(),
+  );
+  assert.equal(
+    (await db.user.findUniqueOrThrow({ where: { id: a.id } })).balance,
+    -90000,
+  );
+  assert.equal(await db.ledgerEntry.count(), 3);
 });

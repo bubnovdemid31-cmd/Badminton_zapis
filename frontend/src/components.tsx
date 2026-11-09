@@ -210,7 +210,10 @@ export function SessionCard({
       </div>
       <h3>{dateTime(s.startsAt, club.timezone)}</h3>
       <p className="muted small">
-        до {time(s.endsAt, club.timezone)} · {levels[s.level]}
+        до {time(s.endsAt, club.timezone)} ·{" "}
+        {s.allowedLevels?.length
+          ? s.allowedLevels.map((l) => l.level.name).join(", ")
+          : levels[s.level]}
       </p>
       <div className="session-details">
         <p>

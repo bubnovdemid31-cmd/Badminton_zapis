@@ -6,6 +6,9 @@ export type User = {
   email: string;
   phone: string;
   role: "CLIENT" | "ADMIN";
+  balance?: number;
+  creditLimit?: number;
+  playerLevelId?: string | null;
   _count?: { bookings: number };
 };
 export type Trainer = {
@@ -34,6 +37,7 @@ export type Club = {
   phone: string;
   email: string;
   address: string;
+  balancePolicy?: string;
   cancelHours: number;
   publicInfo: ClubInfo | null;
 };
@@ -47,6 +51,7 @@ export type Session = {
   court: Court;
   format: Format;
   level: Level;
+  allowedLevels?: { levelId: string; level: { name: string } }[];
   price: number;
   priceFrom: boolean;
   capacity: number;

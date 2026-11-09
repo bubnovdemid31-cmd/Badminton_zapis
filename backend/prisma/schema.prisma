@@ -40,6 +40,11 @@ model User {
   createdAt DateTime @default(now())
   authVersion Int @default(0)
   bookings Booking[]
+  balance Int @default(0)
+  creditLimit Int @default(0)
+  playerLevelId String?
+  playerLevel PlayerLevel? @relation(fields:[playerLevelId], references:[id])
+  ledger LedgerEntry[]
 }
 model Trainer {
   id String @id @default(cuid())
@@ -85,6 +90,7 @@ model Session {
   capacity Int
   open Boolean @default(true)
   cancelled Boolean @default(false)
+  allowedLevels SessionLevel[]
   bookings Booking[]
   @@index([startsAt, endsAt])
 }
@@ -100,6 +106,7 @@ model Booking {
   searchText String @default("")
   childName String?
   childAge Int?
+  priceSnapshot Int @default(0)
   status BookingStatus @default(BOOKED)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -123,6 +130,7 @@ model Settings {
   address String @default("Адрес уточняется")
   cancelHours Int @default(12)
   publicInfo Json?
+  balancePolicy String @default("ALLOW")
 }
 model RateLimit {
   key String @id
@@ -135,4 +143,35 @@ model WebSession {
   data String
   expiresAt DateTime
   @@index([expiresAt])
+}
+
+model LedgerEntry {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields:[userId], references:[id])
+  amount Int
+  balanceAfter Int
+  kind String
+  reason String
+  method String
+  actorId String
+  operationKey String @unique
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+}
+
+model PlayerLevel {
+  id String @id @default(cuid())
+  name String @unique
+  description String @default("")
+  archived Boolean @default(false)
+  users User[]
+  sessions SessionLevel[]
+}
+model SessionLevel {
+  sessionId String
+  session Session @relation(fields:[sessionId], references:[id], onDelete: Cascade)
+  levelId String
+  level PlayerLevel @relation(fields:[levelId], references:[id])
+  @@id([sessionId, levelId])
 }

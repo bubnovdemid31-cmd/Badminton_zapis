@@ -1,3 +1,5 @@
+import { PlayerRules } from "./PlayerRules";
+import { Balance } from "./Balance";
 import { useEffect, useState } from "react";
 import { fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { api } from "./api";
@@ -57,6 +59,9 @@ export function Admin({
     }>(),
     [transfer, setTransfer] = useState<Booking | null>(null),
     [pending, setPending] = useState(false);
+  const [correction, setCorrection] = useState<Booking>();
+  const [levelSession, setLevelSession] = useState<Session>();
+  const [balanceClient, setBalanceClient] = useState<User>();
   const reload = () => {
     setRevision((v) => v + 1);
     void reloadPublic().catch((e) => setError(e.message));
@@ -233,7 +238,18 @@ export function Admin({
                         <td>
                           {dateTime(s.startsAt, data.club.timezone)}
                           <small>
-                            {formats[s.format]} · {levels[s.level]}
+                            {formats[s.format]} ·{" "}
+                            {s.allowedLevels?.length
+                              ? s.allowedLevels
+                                  .map((l) => l.level.name)
+                                  .join(", ")
+                              : levels[s.level]}
+                            <button
+                              className="text-button"
+                              onClick={() => setLevelSession(s)}
+                            >
+                              Допуск по уровням
+                            </button>
                             {s.seriesId ? " · Серия" : ""}
                           </small>
                         </td>
@@ -441,6 +457,14 @@ export function Admin({
                               )}
                             </div>
                           )}
+                          {["ATTENDED", "MISSED"].includes(b.status) && (
+                            <button
+                              className="text-button"
+                              onClick={() => setCorrection(b)}
+                            >
+                              Исправить посещение
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -467,6 +491,7 @@ export function Admin({
                       <th>Имя</th>
                       <th>Email / телефон</th>
                       <th>Записи</th>
+                      <th>Баланс</th>
                       <th>История</th>
                     </tr>
                   </thead>
@@ -484,6 +509,15 @@ export function Admin({
                           <small>{c.phone || "Не указан"}</small>
                         </td>
                         <td>{c._count?.bookings ?? 0}</td>
+                        <td>
+                          <button
+                            className="text-button"
+                            onClick={() => setBalanceClient(c)}
+                          >
+                            {((c.balance ?? 0) / 100).toLocaleString("ru-RU")} ₽
+                            — операции
+                          </button>
+                        </td>
                         <td>
                           <button
                             className="text-button"
@@ -584,6 +618,7 @@ export function Admin({
           {tab === "settings" && (
             <div className="panel settings-panel">
               <h2>Настройки клуба</h2>
+              <PlayerRules policy={data.club.balancePolicy} onChange={reload} />
               <Form
                 submit={async (f) => {
                   await api("/admin/settings", "PATCH", Object.fromEntries(f));
@@ -643,6 +678,72 @@ export function Admin({
             </div>
           )}
         </>
+      )}
+      {balanceClient && (
+        <Modal
+          title={"Баланс: " + balanceClient.name}
+          onClose={() => setBalanceClient(undefined)}
+        >
+          <Balance
+            key={balanceClient.id}
+            userId={balanceClient.id}
+            onChange={reload}
+          />
+          <PlayerRules
+            user={
+              clients.find((c) => c.id === balanceClient.id) ?? balanceClient
+            }
+            onChange={reload}
+          />
+        </Modal>
+      )}
+      {correction && (
+        <Modal
+          title="Исправить посещение"
+          onClose={() => setCorrection(undefined)}
+        >
+          <p>
+            Баланс пересчитается автоматически. Причина сохранится в журнале.
+          </p>
+          <Form
+            submit={async (f) => {
+              await api(
+                "/admin/bookings/" + correction.id + "/correct-attendance",
+                "POST",
+                {
+                  status: f.get("status"),
+                  reason: f.get("reason"),
+                  operationKey: crypto.randomUUID(),
+                },
+              );
+              setCorrection(undefined);
+              reload();
+            }}
+          >
+            <label>
+              Статус
+              <select name="status" defaultValue={correction.status}>
+                <option value="ATTENDED">Присутствовал</option>
+                <option value="MISSED">Не присутствовал</option>
+              </select>
+            </label>
+            <Field name="reason" label="Причина исправления" />
+          </Form>
+        </Modal>
+      )}
+      {levelSession && (
+        <Modal
+          title="Допуск к тренировке"
+          onClose={() => setLevelSession(undefined)}
+        >
+          <PlayerRules
+            session={levelSession}
+            onChange={() => {
+              reload();
+              setLevelSession(undefined);
+            }}
+          />
+        </Modal>
       )}
       {modal && (
         <Modal

@@ -1,3 +1,4 @@
+import { ledger } from "./finance.js";
 import { BookingStatus, Prisma } from "@prisma/client";
 import { z } from "zod";
 import {
@@ -37,7 +38,11 @@ async function eligible(
 ) {
   const session = await tx.session.findUnique({
     where: { id: input.sessionId },
-    include: { trainer: true, court: { include: { venue: true } } },
+    include: {
+      trainer: true,
+      allowedLevels: true,
+      court: { include: { venue: true } },
+    },
   });
   if (
     !session ||
@@ -64,6 +69,32 @@ async function eligible(
     throw new AppError("Нельзя записывать другого клиента", 403);
   if (userId && !(await tx.user.findUnique({ where: { id: userId } })))
     throw new AppError("Клиент не найден", 404);
+  if (userId && actor.role !== "ADMIN") {
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    if (
+      session.allowedLevels.length &&
+      !session.allowedLevels.some((l) => l.levelId === user.playerLevelId)
+    )
+      throw new AppError(
+        "Ваш уровень не подходит для этого занятия. Обратитесь к администратору.",
+      );
+    const club = await settings(tx);
+    if (club.balancePolicy === "POSITIVE" && user.balance <= 0)
+      throw new AppError("Для записи пополните баланс");
+    if (club.balancePolicy === "CREDIT") {
+      const reserved = await tx.booking.aggregate({
+        where: { userId, status: "BOOKED", id: { not: excludeId } },
+        _sum: { priceSnapshot: true },
+      });
+      if (
+        user.balance + user.creditLimit <
+        (reserved._sum.priceSnapshot ?? 0) + session.price
+      )
+        throw new AppError(
+          "Недостаточно средств с учётом предстоящих занятий и кредитного лимита",
+        );
+    }
+  }
   if (session.format === "KIDS" && (!input.childName || !input.childAge))
     throw new AppError("Укажите имя и возраст ребёнка");
   if (session.format !== "KIDS" && (input.childName || input.childAge))
@@ -110,6 +141,7 @@ async function eligible(
     throw new AppError("У клиента уже есть запись на пересекающееся занятие");
   return {
     sessionId: session.id,
+    priceSnapshot: session.price,
     userId,
     guestName,
     guestPhone,
@@ -227,6 +259,17 @@ export async function attendance(
       throw new AppError(
         "Посещение отмечается после завершения активного занятия",
       );
+    if (status === "ATTENDED" && booking.userId && booking.priceSnapshot > 0)
+      await ledger(
+        tx,
+        actor.id,
+        booking.userId,
+        -booking.priceSnapshot,
+        "ATTENDANCE",
+        "Посещение тренировки",
+        "DEPOSIT",
+        "attendance:" + booking.id,
+      );
     await tx.booking.update({ where: { id }, data: { status } });
     await audit(tx, actor.id, "ATTENDANCE", id, { status });
   });
@@ -236,4 +279,64 @@ export function privateBookingWhere(actor: Actor): Prisma.BookingWhereInput {
 }
 export async function getBooking(actor: Actor, id: string) {
   return ownBooking(db, actor, id);
+}
+
+export async function correctAttendance(
+  actor: Actor,
+  id: string,
+  status: "ATTENDED" | "MISSED",
+  reason: string,
+  operationKey: string,
+) {
+  admin(actor);
+  return atomic(async (tx) => {
+    const booking = await ownBooking(tx, actor, id);
+    if (
+      await tx.ledgerEntry.findUnique({
+        where: { operationKey: "attendance:" + id + ":" + operationKey },
+      })
+    )
+      throw new AppError(
+        "Исправление уже выполнено. Обновите список записей.",
+        409,
+      );
+    if (
+      !["ATTENDED", "MISSED"].includes(booking.status) ||
+      booking.session.cancelled
+    )
+      throw new AppError("Исправлять можно только отмеченное посещение");
+    if (booking.status === status) return booking;
+    if (booking.userId) {
+      const entries = await tx.ledgerEntry.aggregate({
+        where: {
+          userId: booking.userId,
+          OR: [
+            { operationKey: "attendance:" + id },
+            { operationKey: { startsWith: "attendance:" + id + ":" } },
+          ],
+        },
+        _sum: { amount: true },
+      });
+      const target = status === "ATTENDED" ? -booking.priceSnapshot : 0;
+      const delta = target - (entries._sum.amount ?? 0);
+      if (delta)
+        await ledger(
+          tx,
+          actor.id,
+          booking.userId,
+          delta,
+          "ATTENDANCE_CORRECTION",
+          reason,
+          "CORRECTION",
+          "attendance:" + id + ":" + operationKey,
+        );
+    }
+    const result = await tx.booking.update({ where: { id }, data: { status } });
+    await audit(tx, actor.id, "ATTENDANCE_CORRECTED", id, {
+      before: booking.status,
+      status,
+      reason,
+    });
+    return result;
+  });
 }

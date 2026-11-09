@@ -1,3 +1,4 @@
+import { Balance } from "./Balance";
 import { useEffect, useState } from "react";
 import { api } from "./api";
 import { PageTitle } from "./App";
@@ -112,6 +113,7 @@ export function Account({
           ["upcoming", "Предстоящие тренировки"],
           ["history", "История"],
           ["profile", "Профиль"],
+          ["balance", "Мой баланс"],
         ].map(([v, n]) => (
           <button
             className={tab === v ? "chosen" : ""}
@@ -124,7 +126,9 @@ export function Account({
       </div>
       {error && <Notice error>{error}</Notice>}
       {message && <Notice>{message}</Notice>}
-      {tab === "profile" ? (
+      {tab === "balance" ? (
+        <Balance />
+      ) : tab === "profile" ? (
         <div className="profile-grid">
           <div className="panel">
             <h2>Личные данные</h2>

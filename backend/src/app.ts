@@ -1,3 +1,4 @@
+import { adjustBalance, adjustmentInput } from "./finance.js";
 import "dotenv/config";
 import express, {
   type Request,
@@ -34,6 +35,7 @@ import {
   cancelBooking,
   transferBooking,
   attendance,
+  correctAttendance,
   bookingInput,
   getBooking,
   privateBookingWhere,
@@ -74,9 +76,13 @@ const publicUser = {
   email: true,
   phone: true,
   role: true,
+  balance: true,
+  creditLimit: true,
+  playerLevelId: true,
 } as const;
 const sessionInclude = {
   trainer: true,
+  allowedLevels: { include: { level: true } },
   court: { include: { venue: true } },
   _count: { select: { bookings: { where: { status: "BOOKED" as const } } } },
 };
@@ -275,6 +281,9 @@ app.post("/api/auth/login", loginLimit, async (req, res) => {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      balance: user.balance,
+      creditLimit: user.creditLimit,
+      playerLevelId: user.playerLevelId,
     },
     csrf: token(req),
   });
@@ -348,6 +357,18 @@ app.get("/api/account/bookings", async (req, res) =>
 app.get("/api/account/bookings/:id", async (req, res) =>
   res.json(await getBooking(req.actor!, String(req.params.id))),
 );
+app.get("/api/account/balance", async (req, res) => {
+  const user = await db.user.findUniqueOrThrow({
+    where: { id: req.actor!.id },
+    select: { balance: true },
+  });
+  const entries = await db.ledgerEntry.findMany({
+    where: { userId: req.actor!.id },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 200,
+  });
+  res.json({ ...user, entries });
+});
 app.post("/api/account/bookings", async (req, res) =>
   res.status(201).json(await book(req.actor!, bookingInput.parse(req.body))),
 );
@@ -555,6 +576,162 @@ app.post("/api/admin/bookings/:id/attendance", async (req, res) => {
   );
   res.json({ ok: true });
 });
+app.post("/api/admin/bookings/:id/correct-attendance", async (req, res) => {
+  const data = z
+    .object({
+      status: z.enum(["ATTENDED", "MISSED"]),
+      reason: z.string().trim().min(3).max(500),
+      operationKey: z.string().uuid(),
+    })
+    .parse(req.body);
+  res.json(
+    await correctAttendance(
+      req.actor!,
+      String(req.params.id),
+      data.status,
+      data.reason,
+      data.operationKey,
+    ),
+  );
+});
+app.get("/api/admin/levels", async (_req, res) =>
+  res.json(await db.playerLevel.findMany({ orderBy: { name: "asc" } })),
+);
+app.post("/api/admin/levels", async (req, res) => {
+  const data = z
+    .object({
+      name: z.string().trim().min(2).max(80),
+      description: z.string().trim().max(500).default(""),
+    })
+    .parse(req.body);
+  res.json(
+    await atomic(async (tx) => {
+      const level = await tx.playerLevel.create({ data });
+      await audit(tx, req.actor!.id, "LEVEL_CREATED", level.id, data);
+      return level;
+    }),
+  );
+});
+app.patch("/api/admin/levels/:id", async (req, res) => {
+  const data = z
+    .object({
+      name: z.string().trim().min(2).max(80),
+      description: z.string().trim().max(500),
+      archived: z.boolean(),
+    })
+    .parse(req.body);
+  res.json(
+    await atomic(async (tx) => {
+      const level = await tx.playerLevel.update({
+        where: { id: String(req.params.id) },
+        data,
+      });
+      await audit(tx, req.actor!.id, "LEVEL_UPDATED", level.id, data);
+      return level;
+    }),
+  );
+});
+app.patch("/api/admin/clients/:id/rules", async (req, res) => {
+  const data = z
+    .object({
+      playerLevelId: z.string().min(1).nullable(),
+      creditLimit: z.number().int().min(0).max(100000000),
+    })
+    .parse(req.body);
+  res.json(
+    await atomic(async (tx) => {
+      if (
+        data.playerLevelId &&
+        !(await tx.playerLevel.findFirst({
+          where: { id: data.playerLevelId, archived: false },
+        }))
+      )
+        throw new AppError("Выберите действующий уровень");
+      const user = await tx.user.update({
+        where: { id: String(req.params.id) },
+        data,
+        select: publicUser,
+      });
+      await audit(tx, req.actor!.id, "CLIENT_RULES_UPDATED", user.id, data);
+      return user;
+    }),
+  );
+});
+app.put("/api/admin/sessions/:id/levels", async (req, res) => {
+  const { levelIds } = z
+    .object({ levelIds: z.array(z.string().min(1)).max(50) })
+    .parse(req.body);
+  res.json(
+    await atomic(async (tx) => {
+      if (
+        !(await tx.session.findUnique({ where: { id: String(req.params.id) } }))
+      )
+        throw new AppError("Занятие не найдено", 404);
+      const ids = [...new Set(levelIds)];
+      if (
+        (await tx.playerLevel.count({
+          where: { id: { in: ids }, archived: false },
+        })) !== ids.length
+      )
+        throw new AppError("Выберите действующие уровни");
+      await tx.sessionLevel.deleteMany({
+        where: { sessionId: String(req.params.id) },
+      });
+      for (const levelId of ids)
+        await tx.sessionLevel.create({
+          data: { sessionId: String(req.params.id), levelId },
+        });
+      await audit(
+        tx,
+        req.actor!.id,
+        "SESSION_LEVELS_UPDATED",
+        String(req.params.id),
+        { levelIds: ids },
+      );
+      return { ok: true };
+    }),
+  );
+});
+app.patch("/api/admin/balance-policy", async (req, res) => {
+  const data = z
+    .object({ balancePolicy: z.enum(["ALLOW", "POSITIVE", "CREDIT"]) })
+    .parse(req.body);
+  res.json(
+    await atomic(async (tx) => {
+      await settings(tx);
+      const result = await tx.settings.update({ where: { id: "club" }, data });
+      await audit(tx, req.actor!.id, "BALANCE_POLICY", "club", data);
+      return result;
+    }),
+  );
+});
+app.get("/api/admin/clients/:id/balance", async (req, res) => {
+  const userId = String(req.params.id);
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { balance: true },
+  });
+  if (!user) throw new AppError("Участник не найден", 404);
+  res.json({
+    ...user,
+    entries: await db.ledgerEntry.findMany({
+      where: { userId },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 200,
+    }),
+  });
+});
+app.post("/api/admin/clients/:id/balance", async (req, res) => {
+  res
+    .status(201)
+    .json(
+      await adjustBalance(
+        req.actor!,
+        String(req.params.id),
+        adjustmentInput.parse(req.body),
+      ),
+    );
+});
 app.get("/api/admin/clients", async (req, res) => {
   const q = z
     .string()
@@ -717,6 +894,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   console.error(
     "Request failed:",
     err instanceof Error ? err.name : "UnknownError",
+    typeof err === "object" && err && "code" in err ? String(err.code) : "",
   );
   return res.status(500).json({ error: "Ошибка сервера. Попробуйте ещё раз." });
 });
