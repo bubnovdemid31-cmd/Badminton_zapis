@@ -123,16 +123,49 @@ test("cancellation frees capacity, preserves history, and allows a new client", 
   );
   assert.equal(await db.booking.count(), 2);
 });
-test("self cancellation and transfer are prohibited inside the 12 hour window", async () => {
+test("late cancellation charges the saved price and refunds it when another player books", async () => {
   await fixtureSession("s1", 8);
-  await fixtureSession("s2", 48);
-  const old = await book(a, { sessionId: "s1" });
-  await assert.rejects(cancelBooking(a, old.id), /Срок/);
-  await assert.rejects(transferBooking(a, old.id, "s2"), /Срок/);
+  const booking = await book(a, { sessionId: "s1" });
+  await db.booking.update({
+    where: { id: booking.id },
+    data: { createdAt: new Date(Date.now() - 31 * 60000) },
+  });
+  await cancelBooking(a, booking.id);
   assert.equal(
-    (await db.booking.findUniqueOrThrow({ where: { id: old.id } })).status,
-    "BOOKED",
+    (await db.user.findUniqueOrThrow({ where: { id: a.id } })).balance,
+    -booking.priceSnapshot,
   );
+  await book(b, { sessionId: "s1" });
+  assert.equal(
+    (await db.user.findUniqueOrThrow({ where: { id: a.id } })).balance,
+    0,
+  );
+  const entries = await db.ledgerEntry.findMany({ where: { userId: a.id } });
+  assert.equal(entries.length, 2);
+  assert.deepEqual(entries.map((entry) => entry.amount).sort(), [
+    -booking.priceSnapshot,
+    booking.priceSnapshot,
+  ]);
+});
+test("a newly created booking can be cancelled free in the late window", async () => {
+  await fixtureSession("s1", 8);
+  const booking = await book(a, { sessionId: "s1" });
+  await cancelBooking(a, booking.id);
+  assert.equal(await db.ledgerEntry.count(), 0);
+});
+test("public bookings open five calendar days ahead in club time", async () => {
+  await fixtureSession("too-early", 24 * 6);
+  await assert.rejects(book(a, { sessionId: "too-early" }), /за 5 дней/);
+  assert.equal((await new BrowserClient().request("/sessions")).data.length, 0);
+});
+test("players without an assigned level can book Б3, with debt of at most 1 300 ₽", async () => {
+  await fixtureSession("s1", 48, 5);
+  await db.playerLevel.create({ data: { id: "b3", name: "Б3" } });
+  await db.sessionLevel.create({ data: { sessionId: "s1", levelId: "b3" } });
+  await db.user.update({ where: { id: a.id }, data: { balance: -130000 } });
+  await db.user.update({ where: { id: b.id }, data: { balance: -130001 } });
+  await book(a, { sessionId: "s1" });
+  await assert.rejects(book(b, { sessionId: "s1" }), /задолженности/);
 });
 test("atomic transfer rolls back if the target is full, then succeeds after release", async () => {
   await fixtureSession("s1", 48);
@@ -369,6 +402,21 @@ test("HTTP sessions: client admin access is denied, foreign booking hidden, CSRF
   assert.ok(!JSON.stringify(publicData.data).includes("@test.ru"));
   assert.ok(!JSON.stringify(publicData.data).includes("passwordHash"));
 });
+test("FAQ edits require an administrator and are visible in the public catalogue", async () => {
+  const client = new BrowserClient();
+  const admin = new BrowserClient();
+  await client.login("a@test.ru");
+  await admin.login("admin@test.ru");
+  const faq = [
+    { question: "Что взять с собой?", answer: "Спортивную обувь и воду." },
+  ];
+  assert.equal((await client.request("/admin/faq", "PUT", faq)).status, 403);
+  assert.equal((await admin.request("/admin/faq", "PUT", faq)).status, 200);
+  assert.deepEqual((await client.request("/public")).data.club.faq, faq);
+  assert.equal((await admin.request("/admin/faq", "PUT", [])).status, 200);
+  assert.deepEqual((await client.request("/public")).data.club.faq, []);
+});
+
 test("HTTP registration always creates CLIENT; login throttling persists in database", async () => {
   const client = new BrowserClient();
   await client.request("/auth/session");
@@ -705,11 +753,16 @@ test("upgrading an existing database removes the old catalogue from all active l
   const catalogue = await browser.request("/public");
   assert.deepEqual(
     catalogue.data.trainers.map((t: { name: string }) => t.name).sort(),
-    ["Георгий Б.", "Дарья Т.", "Полина Д.", "Полина Т."].sort(),
+    [
+      "Батаенков Георгий Владимирович",
+      "Трушникова Дарья Андреевна",
+      "Дерюгина Полина",
+      "Тимофеева Полина Валерьевна",
+    ].sort(),
   );
   assert.deepEqual(
     catalogue.data.venues.map((v: { name: string }) => v.name).sort(),
-    ["СК «Молодежный»", "СК «Динамо спорта»"].sort(),
+    ["СК «Молодежный»", "«Динамо Арена»"].sort(),
   );
   assert.equal((await browser.request("/sessions")).data.length, 0);
   await assert.rejects(book(b, { sessionId: "legacy-session" }), /недоступна/);

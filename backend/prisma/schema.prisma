@@ -49,6 +49,8 @@ model User {
 model Trainer {
   id String @id @default(cuid())
   name String
+  phone String @default("")
+  telegram String @default("")
   bio String
   archived Boolean @default(false)
   sessions Session[]
@@ -106,6 +108,7 @@ model Booking {
   searchText String @default("")
   childName String?
   childAge Int?
+  lateCancelledAt DateTime?
   priceSnapshot Int @default(0)
   status BookingStatus @default(BOOKED)
   createdAt DateTime @default(now())
@@ -123,14 +126,15 @@ model Audit {
 }
 model Settings {
   id String @id @default("club")
-  name String @default("Клуб бадминтона")
+  name String @default("VladSmashClub")
   timezone String @default("Asia/Vladivostok")
   phone String @default("Контактный телефон пока не указан")
   email String @default("")
   address String @default("Адрес уточняется")
-  cancelHours Int @default(12)
+  cancelHours Int @default(24)
+  faq Json?
   publicInfo Json?
-  balancePolicy String @default("ALLOW")
+  balancePolicy String @default("DEBT")
 }
 model RateLimit {
   key String @id

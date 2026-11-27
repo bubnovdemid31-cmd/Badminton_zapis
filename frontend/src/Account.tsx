@@ -7,6 +7,7 @@ import {
   dateTime,
   formats,
   statuses,
+  money,
   sessionPrice,
   type Booking,
   type User,
@@ -48,7 +49,7 @@ export function Account({
       !confirm(
         "Отменить запись на " +
           dateTime(b.session.startsAt, data.club.timezone) +
-          "?",
+          "? Первые 30 минут после записи отмена бесплатна. При поздней отмене стоимость может быть удержана.",
       )
     )
       return;
@@ -185,10 +186,9 @@ export function Account({
       ) : list?.length ? (
         <div className="booking-list">
           {list.map((b) => {
-            const editable =
-              b.status === "BOOKED" &&
-              +new Date(b.session.startsAt) - Date.now() >
-                data.club.cancelHours * 3600000;
+            const active = b.status === "BOOKED";
+            const transferable =
+              active && +new Date(b.session.startsAt) > Date.now();
             return (
               <article className="booking-row" key={b.id}>
                 <div className="booking-date">
@@ -209,18 +209,20 @@ export function Account({
                       ? `Участник: ${b.childName}, ${b.childAge} лет`
                       : `Участник: ${user.name}`}
                   </p>
-                  <strong>{sessionPrice(b.session)}</strong>
+                  <strong>{money(b.priceSnapshot)}</strong>
                 </div>
                 <div className="booking-actions">
-                  {editable ? (
+                  {active ? (
                     <>
-                      <button
-                        className="button outline"
-                        disabled={pending}
-                        onClick={() => void openTransfer(b)}
-                      >
-                        Перенести
-                      </button>
+                      {transferable && (
+                        <button
+                          className="button outline"
+                          disabled={pending}
+                          onClick={() => void openTransfer(b)}
+                        >
+                          Перенести
+                        </button>
+                      )}
                       <button
                         className="text-button danger"
                         disabled={pending}
@@ -229,11 +231,6 @@ export function Account({
                         Отменить запись
                       </button>
                     </>
-                  ) : upcoming(b) ? (
-                    <p className="small muted">
-                      До начала меньше {data.club.cancelHours} ч. Для изменений
-                      свяжитесь с администратором: {data.club.phone}
-                    </p>
                   ) : (
                     <a
                       className="button outline"

@@ -1,3 +1,4 @@
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { ledger } from "./finance.js";
 import { BookingStatus, Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -30,6 +31,15 @@ export type BookingInput = z.infer<typeof bookingInput>;
 const active = { status: BookingStatus.BOOKED };
 const clean = (s: string) =>
   s.trim().replace(/\s+/g, " ").toLocaleLowerCase("ru");
+// Public dates open at midnight in the club's timezone, five calendar days ahead.
+export function bookingWindowEnd(now: Date, timezone: string) {
+  const date = new Date(
+    formatInTimeZone(now, timezone, "yyyy-MM-dd") + "T00:00:00Z",
+  );
+  date.setUTCDate(date.getUTCDate() + 6);
+  return fromZonedTime(date.toISOString().slice(0, 10) + "T00:00:00", timezone);
+}
+
 async function eligible(
   tx: Tx,
   actor: Actor,
@@ -71,14 +81,25 @@ async function eligible(
     throw new AppError("Клиент не найден", 404);
   if (userId && actor.role !== "ADMIN") {
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    const club = await settings(tx);
+    if (session.startsAt >= bookingWindowEnd(new Date(), club.timezone))
+      throw new AppError("Запись открывается за 5 дней до тренировки");
     if (
       session.allowedLevels.length &&
-      !session.allowedLevels.some((l) => l.levelId === user.playerLevelId)
+      !session.allowedLevels.some((l) => l.levelId === user.playerLevelId) &&
+      (user.playerLevelId ||
+        !(await tx.playerLevel.findFirst({
+          where: {
+            name: "Б3",
+            id: { in: session.allowedLevels.map((level) => level.levelId) },
+          },
+        })))
     )
       throw new AppError(
         "Ваш уровень не подходит для этого занятия. Обратитесь к администратору.",
       );
-    const club = await settings(tx);
+    if (club.balancePolicy === "DEBT" && user.balance < -130000)
+      throw new AppError("Запись недоступна при задолженности более 1 300 ₽");
     if (club.balancePolicy === "POSITIVE" && user.balance <= 0)
       throw new AppError("Для записи пополните баланс");
     if (club.balancePolicy === "CREDIT") {
@@ -161,25 +182,93 @@ async function ownBooking(tx: Tx, actor: Actor, id: string) {
     throw new AppError("Доступ запрещён", 403);
   return booking;
 }
-async function editable(
+async function markCancelled(
   tx: Tx,
   actor: Actor,
   booking: Awaited<ReturnType<typeof ownBooking>>,
 ) {
   if (booking.status !== "BOOKED")
     throw new AppError("Запись уже завершена или отменена");
-  if (actor.role !== "ADMIN") {
-    const club = await settings(tx);
-    if (+booking.session.startsAt - Date.now() <= club.cancelHours * 3600000)
-      throw new AppError(
-        "Срок самостоятельной отмены и переноса истёк. Свяжитесь с администратором.",
-      );
-  }
+  const now = Date.now();
+  const club = await settings(tx);
+  const late =
+    actor.role !== "ADMIN" &&
+    booking.userId &&
+    booking.priceSnapshot > 0 &&
+    now - +booking.createdAt >= 30 * 60000 &&
+    +booking.session.startsAt - now < club.cancelHours * 3600000;
+  if (late && booking.userId)
+    await ledger(
+      tx,
+      actor.id,
+      booking.userId,
+      -booking.priceSnapshot,
+      "LATE_CANCELLATION",
+      "Поздняя отмена тренировки",
+      "DEPOSIT",
+      "late-cancellation:" + booking.id,
+    );
+  return tx.booking.update({
+    where: { id: booking.id },
+    data: {
+      status: actor.role === "ADMIN" ? "CANCELLED_CLUB" : "CANCELLED_CLIENT",
+      lateCancelledAt: late ? new Date(now) : null,
+    },
+  });
 }
+
+export async function refundLateCancellation(
+  tx: Tx,
+  actorId: string,
+  booking: { id: string; userId: string | null; priceSnapshot: number },
+  reason: string,
+) {
+  if (!booking.userId) return;
+  await ledger(
+    tx,
+    actorId,
+    booking.userId,
+    booking.priceSnapshot,
+    "LATE_CANCELLATION_REFUND",
+    reason,
+    "REFUND",
+    "late-cancellation-refund:" + booking.id,
+  );
+  await tx.booking.update({
+    where: { id: booking.id },
+    data: { lateCancelledAt: null },
+  });
+}
+
+async function refundReplacedBooking(
+  tx: Tx,
+  actorId: string,
+  booking: { sessionId: string; participantKey: string; userId: string | null },
+) {
+  const replaced = await tx.booking.findFirst({
+    where: {
+      sessionId: booking.sessionId,
+      status: "CANCELLED_CLIENT",
+      lateCancelledAt: { not: null },
+      participantKey: { not: booking.participantKey },
+      ...(booking.userId ? { NOT: { userId: booking.userId } } : {}),
+    },
+    orderBy: [{ lateCancelledAt: "asc" }, { id: "asc" }],
+  });
+  if (replaced)
+    await refundLateCancellation(
+      tx,
+      actorId,
+      replaced,
+      "Освободившееся место занял другой участник",
+    );
+}
+
 export async function book(actor: Actor, input: BookingInput) {
   return atomic(async (tx) => {
     const data = await eligible(tx, actor, input);
     const booking = await tx.booking.create({ data });
+    await refundReplacedBooking(tx, actor.id, booking);
     await audit(tx, actor.id, "BOOKING_CREATED", booking.id, {
       sessionId: data.sessionId,
     });
@@ -189,13 +278,7 @@ export async function book(actor: Actor, input: BookingInput) {
 export async function cancelBooking(actor: Actor, id: string) {
   return atomic(async (tx) => {
     const booking = await ownBooking(tx, actor, id);
-    await editable(tx, actor, booking);
-    const result = await tx.booking.update({
-      where: { id },
-      data: {
-        status: actor.role === "ADMIN" ? "CANCELLED_CLUB" : "CANCELLED_CLIENT",
-      },
-    });
+    const result = await markCancelled(tx, actor, booking);
     await audit(tx, actor.id, "BOOKING_CANCELLED", id, {
       previous: booking.status,
     });
@@ -209,7 +292,8 @@ export async function transferBooking(
 ) {
   return atomic(async (tx) => {
     const old = await ownBooking(tx, actor, id);
-    await editable(tx, actor, old);
+    if (old.status !== "BOOKED" || +old.session.startsAt <= Date.now())
+      throw new AppError("Перенос доступен до начала тренировки");
     if (old.sessionId === sessionId)
       throw new AppError("Выберите другое занятие");
     const target = await tx.session.findUnique({ where: { id: sessionId } });
@@ -228,13 +312,9 @@ export async function transferBooking(
         : {}),
     };
     const data = await eligible(tx, actor, input, id);
-    await tx.booking.update({
-      where: { id },
-      data: {
-        status: actor.role === "ADMIN" ? "CANCELLED_CLUB" : "CANCELLED_CLIENT",
-      },
-    });
+    await markCancelled(tx, actor, old);
     const result = await tx.booking.create({ data });
+    await refundReplacedBooking(tx, actor.id, result);
     await audit(tx, actor.id, "BOOKING_TRANSFERRED", id, {
       from: old.sessionId,
       to: sessionId,

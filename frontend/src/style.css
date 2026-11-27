@@ -2408,3 +2408,17 @@ footer {
     gap: 8px;
   }
 }
+
+.multiline {
+  white-space: pre-line;
+}
+.hero-copy h1.club-name {
+  font-size: clamp(2rem, 5.5vw, 5rem);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 761px) {
+  .club-prices .format-card {
+    grid-template-columns: 1fr 1.2fr auto;
+  }
+}

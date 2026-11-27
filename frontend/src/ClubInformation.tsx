@@ -1,4 +1,4 @@
-import { formats, money, type PublicData } from "./types";
+import { money, type PublicData } from "./types";
 export function ClubPrices({ data }: { data: PublicData }) {
   const info = data.club.publicInfo;
   if (!info)
@@ -7,30 +7,28 @@ export function ClubPrices({ data }: { data: PublicData }) {
     );
   return (
     <div className="formats-grid club-prices">
-      {info.pricing.map((p, i) => (
-        <a
-          className="format-card"
-          href={"#/schedule?format=" + p.format}
-          key={p.id}
-        >
-          <span className="format-num">
-            {String(i + 1).padStart(2, "0")} / {formats[p.format]}
-          </span>
-          <h3>{p.title}</h3>
-          <p>
-            {p.venue ?? "Площадка и время по согласованию"}
-            {p.capacity !== null && (
-              <span className="price-capacity">
-                До {p.capacity} {p.capacity === 1 ? "человека" : "человек"}
-              </span>
-            )}
-          </p>
-          <strong className="club-price">
-            {p.priceFrom ? "от " : ""}
-            {money(p.price)}
-          </strong>
-        </a>
-      ))}
+      {info.pricing.map((p) => {
+        const venueId = info.venues.find((venue) => venue.name === p.venue)?.id;
+        const filters = new URLSearchParams({ format: p.format });
+        if (venueId) filters.set("venue", venueId);
+        return (
+          <a className="format-card" href={"#/schedule?" + filters} key={p.id}>
+            <h3>{p.title}</h3>
+            <p>
+              {p.venue ?? "Площадка и время по согласованию"}
+              {p.capacity !== null && (
+                <span className="price-capacity">
+                  До {p.capacity} {p.capacity === 1 ? "человека" : "человек"}
+                </span>
+              )}
+            </p>
+            <strong className="club-price">
+              {p.priceFrom ? "от " : ""}
+              {money(p.price)}
+            </strong>
+          </a>
+        );
+      })}
     </div>
   );
 }
@@ -42,7 +40,7 @@ export function WeeklySchedule({ data }: { data: PublicData }) {
       <div className="section-head">
         <div>
           <span className="eyebrow">КАЖДУЮ НЕДЕЛЮ</span>
-          <h2>Регулярное расписание</h2>
+          <h2>Недельное расписание</h2>
         </div>
         <span className="muted small">Время клуба: {data.club.timezone}</span>
       </div>
@@ -53,7 +51,7 @@ export function WeeklySchedule({ data }: { data: PublicData }) {
         </span>
         <span>
           <i className="venue-dot arena" />
-          СК «Динамо спорта»
+          {info.venues.find((v) => v.id === "club-dynamo-sporta")?.name}
         </span>
       </div>
       <div className="weekly-table">
@@ -75,9 +73,9 @@ export function WeeklySchedule({ data }: { data: PublicData }) {
                     />
                     {info.venues.find((v) => v.id === s.venueId)?.name}
                     <small>
-                      {s.format === "MINIGROUP" ? "Мини-группа" : "Групповая"} ·
-                      до {s.capacity} человек
+                      Игровая тренировка · до {s.capacity} человек
                       {s.levelLabel ? " · " + s.levelLabel : ""}
+                      {s.price != null && " · " + money(s.price)}
                     </small>
                   </span>
                   <span className="weekly-trainer">
@@ -90,9 +88,8 @@ export function WeeklySchedule({ data }: { data: PublicData }) {
         ))}
       </div>
       <p className="muted small weekly-note">
-        Это регулярное расписание. Онлайн-запись открывается на конкретные даты
-        в списке занятий ниже; там указаны свободные места и подтверждённая
-        стоимость.
+        Это черновик недельного расписания. Запись открывается за пять дней до
+        опубликованной тренировки.
       </p>
     </section>
   );

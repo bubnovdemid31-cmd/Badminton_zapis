@@ -31,7 +31,7 @@ function route() {
 function BrandLogo() {
   const [loaded, setLoaded] = useState(false);
   return (
-    <span className="brand-logo-slot" role="img" aria-label="Vlad Smash Club">
+    <span className="brand-logo-slot" role="img" aria-label="VladSmashClub">
       <img
         className="brand-logo-image"
         src="/logo.jpg"
@@ -216,24 +216,44 @@ export function App() {
         {p === "/about" && (
           <section className="container section">
             <PageTitle
-              eyebrow="МЕСТО ДЛЯ ТВОЕЙ ИГРЫ"
-              title="Встречаемся на корте"
-              text="Наш клуб — про движение, внимание к себе и людей, с которыми хочется играть снова."
+              eyebrow="БАДМИНТОННЫЙ КЛУБ ВО ВЛАДИВОСТОКЕ"
+              title={club.name}
+              text="Игра, которая меняет уровень."
             />
             <div className="about-banner">
               <img src="/court.svg" alt="Иллюстрация бадминтонного корта" />
               <div>
-                <h2>Больше, чем тренировка</h2>
+                <h2>О клубе</h2>
                 <p>
-                  Учим играть с удовольствием. Начинаем с понятной техники,
-                  поддерживаем на каждом шаге и знакомим с командой.
+                  VladSmashClub — первый бадминтонный клуб Владивостока. Здесь
+                  встречаются новички и опытные игроки, любители и спортсмены.
+                  Мы тренируемся в залах, оборудованных для бадминтона, и растём
+                  вместе с тренерами и командой.
                 </p>
+                <ul>
+                  <li>Дружелюбная атмосфера и разные форматы тренировок</li>
+                  <li>Тренеры — действующие спортсмены с опытом выступлений</li>
+                  <li>Удобное расположение залов и гибкое расписание</li>
+                  <li>Онлайн-запись на тренировки</li>
+                </ul>
+                <h3>Достижения</h3>
                 <p>
-                  Адрес площадки и условия первого визита уточните у
-                  администратора клуба.
+                  Победители командного чемпионата Приморского края 2025 года в
+                  категориях Б3 и Б2.
                 </p>
               </div>
             </div>
+            {!!club.faq?.length && (
+              <section className="space-top">
+                <h2>Частые вопросы</h2>
+                {club.faq.map(({ question, answer }, index) => (
+                  <details className="panel" key={index}>
+                    <summary>{question}</summary>
+                    <p className="multiline">{answer}</p>
+                  </details>
+                ))}
+              </section>
+            )}
             <h2 className="space-top">Наши площадки</h2>
             <Venues data={data} />
           </section>
@@ -250,9 +270,10 @@ export function App() {
                 )}
                 <p>{club.address}</p>
                 <p className="muted">Время клуба: {club.timezone}</p>
+                <a href="#/coaches">Телефоны и Telegram тренеров</a>
                 <p>
-                  Оплата занятий производится в клубе. По вопросам поздней
-                  отмены свяжитесь с администратором.
+                  Администратор пополняет депозит и отвечает на вопросы о записи
+                  и возвратах.
                 </p>
               </div>
               <img
@@ -332,7 +353,7 @@ export function App() {
             <a href="#/contacts">Контакты</a>
             {user?.role === "ADMIN" && <a href="#/admin">Администратор</a>}
           </div>
-          <small>© {new Date().getFullYear()} · Оплата в клубе</small>
+          <small>© {new Date().getFullYear()} · VladSmashClub</small>
         </div>
       </footer>
       {selected && (
@@ -345,7 +366,12 @@ export function App() {
           </p>
           <p>{selected.court.venue.address}</p>
           <p>
-            {levels[selected.level]} ·{" "}
+            {selected.allowedLevels?.length
+              ? selected.allowedLevels.map(({ level }) => level.name).join(", ")
+              : selected.format === "GROUP"
+                ? "Все уровни"
+                : levels[selected.level]}{" "}
+            ·{" "}
             {Math.round(
               (+new Date(selected.endsAt) - +new Date(selected.startsAt)) /
                 60000,
@@ -359,8 +385,9 @@ export function App() {
             </Notice>
           )}
           <Notice>
-            Отмена и перенос — не позднее чем за {club.cancelHours} ч до начала.
-            Позже свяжитесь с администратором. Оплата в клубе.
+            Отмена бесплатна в первые 30 минут после записи. Позже, если до
+            начала меньше {club.cancelHours} ч, стоимость удерживается. Если
+            место займёт другой участник, деньги вернутся на депозит.
           </Notice>
           <Form
             label="Подтвердить запись"
@@ -419,11 +446,16 @@ export function PageTitle({
 function Coaches({ data }: { data: PublicData }) {
   return data.trainers.length ? (
     <div className="coaches-grid">
-      {data.trainers.map((t, i) => (
+      {data.trainers.map((t) => (
         <article className="coach" key={t.id}>
-          <span className="coach-number">{String(i + 1).padStart(2, "0")}</span>
           <h3>{t.name}</h3>
-          <p>{t.bio}</p>
+          <p className="multiline">{t.bio}</p>
+          <div className="actions">
+            {t.phone && (
+              <a href={"tel:" + t.phone.replace(/[^+\d]/g, "")}>{t.phone}</a>
+            )}
+            {t.telegram && <a href={"https://t.me/" + t.telegram}>Telegram</a>}
+          </div>
           <a href={"#/schedule?trainer=" + t.id}>Тренировки тренера ↗</a>
         </article>
       ))}
@@ -465,18 +497,9 @@ function Home({
     <>
       <section className="container hero">
         <div className="hero-copy">
-          <span className="eyebrow">БАДМИНТОННЫЙ КЛУБ</span>
-          <h1>
-            Время
-            <br />
-            для <em>игры.</em>
-          </h1>
-          <p>
-            Оставь суету за пределами корта.
-            <br />
-            Бадминтон, новые друзья и энергия
-            <br className="desktop" /> на весь день — в нашем клубе.
-          </p>
+          <span className="eyebrow">БАДМИНТОННЫЙ КЛУБ ВО ВЛАДИВОСТОКЕ</span>
+          <h1 className="club-name">{data.club.name}</h1>
+          <p>Игра, которая меняет уровень.</p>
           <div className="hero-actions">
             <a href="#/schedule" className="button">
               Записаться на тренировку <span>↗</span>
@@ -563,7 +586,7 @@ function Home({
             </a>
           </div>
           <p className="muted">
-            Время занятий: {data.club.timezone}. Оплата в клубе.
+            Время занятий: {data.club.timezone}. Оплата с депозита.
           </p>
           {err ? (
             <Notice error>{err}</Notice>
@@ -624,7 +647,7 @@ function Schedule({
       format: initialFormat,
       venue: query.get("venue") ?? "",
       trainer: query.get("trainer") ?? "",
-      level: "",
+      playerLevel: "",
     }),
     [day, setDay] = useState(""),
     [sessions, setSessions] = useState<Session[] | null>(null),
@@ -678,7 +701,11 @@ function Schedule({
             ["venue", "Площадка", data.venues.map((v) => [v.id, v.name])],
             ["format", "Формат", Object.entries(formats)],
             ["trainer", "Тренер", data.trainers.map((t) => [t.id, t.name])],
-            ["level", "Уровень", Object.entries(levels)],
+            [
+              "playerLevel",
+              "Уровень",
+              ["Б1", "Б2", "Б3"].map((level) => [level, level]),
+            ],
           ] as [keyof typeof filters, string, string[][]][]
         ).map(([key, label, options]) => (
           <label key={key}>
@@ -721,8 +748,7 @@ function Schedule({
         ))}
       </div>
       <p className="muted small">
-        Время клуба: {data.club.timezone} · Самостоятельная отмена и перенос за{" "}
-        {data.club.cancelHours} ч до начала
+        Время клуба: {data.club.timezone} · Запись открывается за 5 дней
       </p>
       {error ? (
         <>

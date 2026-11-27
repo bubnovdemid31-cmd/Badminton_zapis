@@ -37,6 +37,7 @@ import {
   attendance,
   correctAttendance,
   bookingInput,
+  bookingWindowEnd,
   getBooking,
   privateBookingWhere,
 } from "./booking.js";
@@ -321,12 +322,15 @@ app.get("/api/sessions", async (req, res) => {
       format: z
         .enum(["GROUP", "PERSONAL", "KIDS", "MINIGROUP", "SPLIT"])
         .optional(),
+      playerLevel: z.enum(["Б1", "Б2", "Б3"]).optional(),
       level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]).optional(),
     })
     .parse(req.query);
+  const { timezone } = await settings();
+  const now = new Date();
   const sessions = await db.session.findMany({
     where: {
-      startsAt: { gt: new Date() },
+      startsAt: { gt: now, lt: bookingWindowEnd(now, timezone) },
       cancelled: false,
       trainer: { archived: false },
       court: {
@@ -336,6 +340,18 @@ app.get("/api/sessions", async (req, res) => {
       },
       ...(filters.format ? { format: filters.format } : {}),
       ...(filters.level ? { level: filters.level } : {}),
+      ...(filters.playerLevel
+        ? {
+            OR: [
+              { allowedLevels: { none: {} } },
+              {
+                allowedLevels: {
+                  some: { level: { name: filters.playerLevel } },
+                },
+              },
+            ],
+          }
+        : {}),
       ...(filters.trainer ? { trainerId: filters.trainer } : {}),
     },
     include: sessionInclude,
@@ -694,7 +710,7 @@ app.put("/api/admin/sessions/:id/levels", async (req, res) => {
 });
 app.patch("/api/admin/balance-policy", async (req, res) => {
   const data = z
-    .object({ balancePolicy: z.enum(["ALLOW", "POSITIVE", "CREDIT"]) })
+    .object({ balancePolicy: z.enum(["DEBT", "ALLOW", "POSITIVE", "CREDIT"]) })
     .parse(req.body);
   res.json(
     await atomic(async (tx) => {
@@ -766,6 +782,18 @@ app.get("/api/admin/resources", async (_req, res) => {
 const trainerInput = z.object({
   name: z.string().trim().min(2).max(100),
   bio: z.string().trim().min(10).max(2000),
+  phone: z
+    .string()
+    .trim()
+    .max(30)
+    .regex(/^[+\d()\s-]*$/)
+    .optional(),
+  telegram: z
+    .string()
+    .trim()
+    .max(32)
+    .regex(/^[A-Za-z0-9_]*$/)
+    .optional(),
   archived: z.boolean().default(false),
 });
 const venueInput = z.object({
@@ -852,6 +880,25 @@ app.patch("/api/admin/settings", async (req, res) => {
       return result;
     }),
   );
+});
+app.put("/api/admin/faq", async (req, res) => {
+  const faq = z
+    .array(
+      z.object({
+        question: z.string().trim().min(1).max(200),
+        answer: z.string().trim().min(1).max(2000),
+      }),
+    )
+    .max(50)
+    .parse(req.body);
+  await atomic(async (tx) => {
+    await settings(tx);
+    await tx.settings.updateMany({ where: { id: "club" }, data: { faq } });
+    await audit(tx, req.actor!.id, "FAQ_UPDATED", "club", {
+      count: faq.length,
+    });
+  });
+  res.json(faq);
 });
 app.get("/api/admin/audit", async (_req, res) =>
   res.json(

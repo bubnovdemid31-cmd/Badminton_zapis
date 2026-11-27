@@ -45,7 +45,7 @@ export function PlayerRules({
             <label>
               Уровень
               <select name="level" defaultValue={user.playerLevelId ?? ""}>
-                <option value="">Не назначен</option>
+                <option value="">Б3 по умолчанию</option>
                 {levels
                   .filter((l) => !l.archived || l.id === user.playerLevelId)
                   .map((l) => (
@@ -110,7 +110,8 @@ export function PlayerRules({
           >
             <label>
               Условия записи
-              <select name="policy" defaultValue={policy ?? "ALLOW"}>
+              <select name="policy" defaultValue={policy ?? "DEBT"}>
+                <option value="DEBT">Допускать задолженность до 1 300 ₽</option>
                 <option value="ALLOW">Разрешать запись с любым балансом</option>
                 <option value="POSITIVE">Требовать положительный баланс</option>
                 <option value="CREDIT">

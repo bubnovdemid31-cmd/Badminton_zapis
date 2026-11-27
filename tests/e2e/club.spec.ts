@@ -6,7 +6,7 @@ test("register, book, reload persistence, cancel; responsive public pages", asyn
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Время.*для игры/ }),
+    page.getByRole("heading", { name: "VladSmashClub" }),
   ).toBeVisible();
   await expect(page.locator("body")).toHaveJSProperty(
     "scrollWidth",

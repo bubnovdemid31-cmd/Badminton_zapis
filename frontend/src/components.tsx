@@ -213,7 +213,9 @@ export function SessionCard({
         до {time(s.endsAt, club.timezone)} ·{" "}
         {s.allowedLevels?.length
           ? s.allowedLevels.map((l) => l.level.name).join(", ")
-          : levels[s.level]}
+          : s.format === "GROUP"
+            ? "Все уровни"
+            : levels[s.level]}
       </p>
       <div className="session-details">
         <p>

@@ -15,6 +15,8 @@ export type Trainer = {
   id: string;
   name: string;
   bio: string;
+  phone: string;
+  telegram: string;
   archived: boolean;
 };
 export type Venue = {
@@ -31,7 +33,9 @@ export type Court = {
   archived: boolean;
   venue: Venue;
 };
+export type FAQEntry = { question: string; answer: string };
 export type Club = {
+  faq: FAQEntry[] | null;
   name: string;
   timezone: string;
   phone: string;
@@ -70,6 +74,7 @@ export type Booking = {
   guestPhone: string | null;
   childName: string | null;
   childAge: number | null;
+  priceSnapshot: number;
   status:
     "BOOKED" | "CANCELLED_CLIENT" | "CANCELLED_CLUB" | "ATTENDED" | "MISSED";
 };
@@ -136,6 +141,7 @@ export type ClubInfo = {
       format: Format;
       levelLabel: string | null;
       capacity: number;
+      price?: number;
     }[];
   }[];
   shopUrl?: string;

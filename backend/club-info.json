@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "venues": [
     {
       "id": "club-youth",
@@ -8,14 +8,14 @@
     },
     {
       "id": "club-dynamo-sporta",
-      "name": "СК «Динамо спорта»",
+      "name": "«Динамо Арена»",
       "address": "Адрес уточняется"
     }
   ],
   "pricing": [
     {
       "id": "group-youth",
-      "title": "Групповая тренировка",
+      "title": "Игровая тренировка",
       "venue": "СК «Молодежный»",
       "format": "GROUP",
       "price": 65000,
@@ -24,39 +24,12 @@
     },
     {
       "id": "group-dynamo",
-      "title": "Групповая тренировка",
-      "venue": "СК «Динамо спорта»",
+      "title": "Игровая тренировка",
+      "venue": "«Динамо Арена»",
       "format": "GROUP",
       "price": 75000,
       "priceFrom": false,
       "capacity": 26
-    },
-    {
-      "id": "mini-dynamo",
-      "title": "Мини-группа",
-      "venue": "СК «Динамо спорта»",
-      "format": "MINIGROUP",
-      "price": 150000,
-      "priceFrom": false,
-      "capacity": 16
-    },
-    {
-      "id": "split",
-      "title": "Сплит-тренировка",
-      "venue": null,
-      "format": "SPLIT",
-      "price": 150000,
-      "priceFrom": true,
-      "capacity": null
-    },
-    {
-      "id": "personal",
-      "title": "Индивидуальная тренировка",
-      "venue": null,
-      "format": "PERSONAL",
-      "price": 300000,
-      "priceFrom": true,
-      "capacity": 1
     }
   ],
   "week": [
@@ -66,20 +39,22 @@
         {
           "venueId": "club-dynamo-sporta",
           "startsAt": "12:00",
-          "endsAt": "14:00",
-          "trainer": "Полина Т.",
+          "endsAt": "13:30",
+          "trainer": "Полина Тимофеева",
           "format": "GROUP",
-          "levelLabel": null,
-          "capacity": 26
+          "levelLabel": "Все уровни",
+          "capacity": 26,
+          "price": 75000
         },
         {
           "venueId": "club-youth",
           "startsAt": "20:00",
-          "endsAt": "21:00",
-          "trainer": "Дарья Т.",
+          "endsAt": "21:30",
+          "trainer": "Дарья Трушникова",
           "format": "GROUP",
-          "levelLabel": null,
-          "capacity": 26
+          "levelLabel": "Все уровни",
+          "capacity": 26,
+          "price": 65000
         }
       ]
     },
@@ -87,22 +62,14 @@
       "day": "Вторник",
       "slots": [
         {
-          "venueId": "club-dynamo-sporta",
-          "startsAt": "12:00",
-          "endsAt": "13:30",
-          "trainer": "Георгий Б.",
-          "format": "GROUP",
-          "levelLabel": null,
-          "capacity": 26
-        },
-        {
           "venueId": "club-youth",
           "startsAt": "20:00",
           "endsAt": "21:30",
-          "trainer": "Георгий Б.",
+          "trainer": "Георгий Батаенков",
           "format": "GROUP",
-          "levelLabel": null,
-          "capacity": 26
+          "levelLabel": "Все уровни",
+          "capacity": 26,
+          "price": 65000
         }
       ]
     },
@@ -113,19 +80,21 @@
           "venueId": "club-youth",
           "startsAt": "12:30",
           "endsAt": "14:00",
-          "trainer": "Полина Т.",
+          "trainer": "Полина Тимофеева",
           "format": "GROUP",
-          "levelLabel": null,
-          "capacity": 26
+          "levelLabel": "Все уровни",
+          "capacity": 26,
+          "price": 65000
         },
         {
           "venueId": "club-youth",
           "startsAt": "20:00",
-          "endsAt": "21:00",
-          "trainer": "Дарья Т.",
+          "endsAt": "21:30",
+          "trainer": "Дарья Трушникова",
           "format": "GROUP",
-          "levelLabel": null,
-          "capacity": 26
+          "levelLabel": "Все уровни",
+          "capacity": 26,
+          "price": 65000
         }
       ]
     },
@@ -136,19 +105,21 @@
           "venueId": "club-youth",
           "startsAt": "12:00",
           "endsAt": "14:00",
-          "trainer": "Полина Т.",
+          "trainer": "Полина Тимофеева",
           "format": "GROUP",
-          "levelLabel": null,
-          "capacity": 26
+          "levelLabel": "Все уровни",
+          "capacity": 26,
+          "price": 65000
         },
         {
           "venueId": "club-youth",
           "startsAt": "20:00",
-          "endsAt": "21:00",
-          "trainer": "Дарья Т.",
+          "endsAt": "21:30",
+          "trainer": "Дарья Трушникова",
           "format": "GROUP",
-          "levelLabel": null,
-          "capacity": 26
+          "levelLabel": "Все уровни",
+          "capacity": 26,
+          "price": 65000
         }
       ]
     },
@@ -159,19 +130,21 @@
           "venueId": "club-youth",
           "startsAt": "10:00",
           "endsAt": "11:30",
-          "trainer": "Полина Д.",
+          "trainer": "Полина Дерюгина",
           "format": "GROUP",
-          "levelLabel": "Для играющих",
-          "capacity": 26
+          "levelLabel": "Б1, Б2",
+          "capacity": 26,
+          "price": 65000
         },
         {
           "venueId": "club-youth",
           "startsAt": "11:30",
           "endsAt": "13:00",
-          "trainer": "Полина Д.",
+          "trainer": "Полина Дерюгина",
           "format": "GROUP",
-          "levelLabel": "Начальный уровень",
-          "capacity": 26
+          "levelLabel": "Б3",
+          "capacity": 26,
+          "price": 65000
         }
       ]
     },
@@ -182,19 +155,21 @@
           "venueId": "club-youth",
           "startsAt": "10:00",
           "endsAt": "11:30",
-          "trainer": "Полина Д.",
+          "trainer": "Георгий Батаенков",
           "format": "GROUP",
-          "levelLabel": "Для играющих",
-          "capacity": 26
+          "levelLabel": "Б1, Б2",
+          "capacity": 26,
+          "price": 65000
         },
         {
           "venueId": "club-youth",
           "startsAt": "11:30",
           "endsAt": "13:00",
-          "trainer": "Полина Д.",
+          "trainer": "Георгий Батаенков",
           "format": "GROUP",
-          "levelLabel": "Начальный уровень",
-          "capacity": 26
+          "levelLabel": "Б3",
+          "capacity": 26,
+          "price": 65000
         }
       ]
     }

@@ -1,3 +1,4 @@
+import { FAQEditor } from "./FAQEditor";
 import { PlayerRules } from "./PlayerRules";
 import { Balance } from "./Balance";
 import { useEffect, useState } from "react";
@@ -649,7 +650,7 @@ export function Admin({
                   value={data.club.address}
                 />
                 <Field
-                  label="Отмена и перенос: минимум часов до начала"
+                  label="Поздняя отмена, часов до начала"
                   name="cancelHours"
                   type="number"
                   value={data.club.cancelHours}
@@ -663,6 +664,9 @@ export function Admin({
                 </p>
               </Form>
             </div>
+          )}
+          {tab === "settings" && (
+            <FAQEditor faq={data.club.faq} reload={reload} />
           )}
           {tab === "audit" && (
             <div className="audit-list">
@@ -837,7 +841,7 @@ export function Admin({
               </select>
             </label>
             <Notice>
-              Срок самостоятельной отмены к администратору не применяется.
+              При отмене администратором стоимость тренировки не удерживается.
               Перенос сохраняется атомарно.
             </Notice>
           </Form>
@@ -1291,6 +1295,23 @@ function ResourceForm({
             defaultValue={(item as Trainer)?.bio}
           />
         </label>
+      )}
+      {kind === "trainer" && (
+        <>
+          <Field
+            label="Телефон"
+            name="phone"
+            type="tel"
+            value={(item as Trainer)?.phone}
+            required={false}
+          />
+          <Field
+            label="Имя в Telegram без @"
+            name="telegram"
+            value={(item as Trainer)?.telegram}
+            required={false}
+          />
+        </>
       )}
       {kind === "venue" && (
         <Field label="Адрес" name="address" value={(item as Venue)?.address} />

@@ -171,7 +171,7 @@ test("admin manually tops up a balance and assigns the participant level", async
   ).toBeVisible();
   await dialog
     .getByRole("combobox", { name: "Уровень", exact: true })
-    .selectOption("beginner");
+    .selectOption({ label: "Б2" });
   await dialog
     .getByRole("button", { name: "Сохранить", exact: true })
     .last()
@@ -181,7 +181,7 @@ test("admin manually tops up a balance and assigns the participant level", async
       async () =>
         (await db.user.findUniqueOrThrow({ where: { email } })).playerLevelId,
     )
-    .toBe("beginner");
+    .toBe("vsc-b2");
 });
 
 test("admin corrects a missed attendance and the balance is charged", async ({

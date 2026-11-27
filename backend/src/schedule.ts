@@ -1,3 +1,4 @@
+import { refundLateCancellation } from "./booking.js";
 import { z } from "zod";
 import { fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import {
@@ -168,6 +169,16 @@ export async function cancelSession(
       throw new AppError(
         `У занятия ${count} записей. Подтвердите отмену.`,
         409,
+      );
+    const lateCancellations = await tx.booking.findMany({
+      where: { sessionId: id, lateCancelledAt: { not: null } },
+    });
+    for (const booking of lateCancellations)
+      await refundLateCancellation(
+        tx,
+        actor.id,
+        booking,
+        "Тренировка отменена клубом",
       );
     await tx.booking.updateMany({
       where: { sessionId: id, status: "BOOKED" },
