@@ -450,13 +450,13 @@ function Coaches({ data }: { data: PublicData }) {
         <article className="coach" key={t.id}>
           <h3>{t.name}</h3>
           <p className="multiline">{t.bio}</p>
-          <div className="actions">
+          <div className="coach-links">
             {t.phone && (
               <a href={"tel:" + t.phone.replace(/[^+\d]/g, "")}>{t.phone}</a>
             )}
             {t.telegram && <a href={"https://t.me/" + t.telegram}>Telegram</a>}
+            <a href={"#/schedule?trainer=" + t.id}>Тренировки тренера ↗</a>
           </div>
-          <a href={"#/schedule?trainer=" + t.id}>Тренировки тренера ↗</a>
         </article>
       ))}
     </div>

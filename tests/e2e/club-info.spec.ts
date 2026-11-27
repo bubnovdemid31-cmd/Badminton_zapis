@@ -30,3 +30,35 @@ test("confirmed rates, capacities and weekly coaches are visible", async ({
     await page.locator("body").evaluate((el) => el.clientWidth),
   );
 });
+
+test("coach names, biographies and links fit without overlapping", async ({
+  page,
+}) => {
+  await page.goto("/#/coaches");
+  const coaches = page.locator(".coach");
+  await expect(coaches).toHaveCount(4);
+  for (const width of [390, 800, 825, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const coach of await coaches.all()) {
+      const name = await coach.getByRole("heading").boundingBox();
+      const bio = await coach.locator("p").boundingBox();
+      const links = coach.locator(".coach-links");
+      const contacts = await links.boundingBox();
+      expect(name && bio && contacts).toBeTruthy();
+      if (!name || !bio || !contacts) continue;
+      if (width <= 800) {
+        expect(name.y + name.height).toBeLessThanOrEqual(bio.y);
+        expect(bio.y + bio.height).toBeLessThanOrEqual(contacts.y);
+      } else {
+        expect(name.x + name.width).toBeLessThanOrEqual(bio.x);
+        expect(bio.x + bio.width).toBeLessThanOrEqual(contacts.x);
+      }
+      await expect(links.getByRole("link")).toHaveCount(3);
+    }
+    expect(
+      await page
+        .locator("body")
+        .evaluate((body) => body.scrollWidth - body.clientWidth),
+    ).toBe(0);
+  }
+});
