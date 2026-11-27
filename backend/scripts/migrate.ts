@@ -3,6 +3,10 @@ import { readdir, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { databaseUrl } from "../src/database-path.js";
+function migrationChecksum(sql: string) {
+  return createHash("sha256").update(sql).digest("hex");
+}
+
 export async function migrate() {
   const client = createClient({ url: databaseUrl, concurrency: 1 });
   try {
@@ -13,11 +17,12 @@ export async function migrate() {
     for (const dir of (await readdir(root, { withFileTypes: true }))
       .filter((d) => d.isDirectory())
       .sort((a, b) => a.name.localeCompare(b.name))) {
-      const sql = await readFile(
-          path.join(root, dir.name, "migration.sql"),
-          "utf8",
-        ),
-        checksum = createHash("sha256").update(sql).digest("hex");
+      const file = await readFile(
+        path.join(root, dir.name, "migration.sql"),
+        "utf8",
+      );
+      const sql = file.replace(/\r\n/g, "\n");
+      const checksum = migrationChecksum(sql);
       // BEGIN IMMEDIATE prevents parallel migrators from applying the same file.
       const tx = await client.transaction("write");
       try {
@@ -29,7 +34,12 @@ export async function migrate() {
           args: [dir.name],
         });
         if (old.rows.length) {
-          if (old.rows[0].checksum !== checksum)
+          const appliedChecksum = old.rows[0].checksum;
+          // Older checkouts hashed the file as read, including Windows line endings.
+          if (
+            appliedChecksum !== checksum &&
+            appliedChecksum !== migrationChecksum(sql.replace(/\n/g, "\r\n"))
+          )
             throw new Error("Применённая миграция изменена: " + dir.name);
         } else {
           await tx.executeMultiple(sql);
